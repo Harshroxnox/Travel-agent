@@ -2,30 +2,50 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_google_genai import ChatGoogleGenerativeAI
 from mock_apis import mock_flights_api, mock_hotels_api
 from dotenv import load_dotenv
+from prompts.gather_intent_prompt import gather_intent_prompt
+import json
 
 load_dotenv()
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
+intents = ["booking", "itinerary", "knowledge", "general"]
+
 # --- Node 1: Gather Intent ---
 def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
-    
-    if "flight" in user_msg or "hotel" in user_msg or "book" in user_msg:
-        intent = "booking"
-    elif "plan" in user_msg or "itinerary" in user_msg or "trip" in user_msg:
-        intent = "itinerary"
-    elif "?" in user_msg or "what" in user_msg or "how" in user_msg:
-        intent = "knowledge"
-    else:
-        intent = "general"
 
-    return {"intent": intent}
+    response = llm.invoke(gather_intent_prompt(user_msg)).content
+    
+    try:
+        data = json.loads(response)
+        data["intent"] = (data.get("intent") or "").lower()
+    except:
+        data = { "intent": None }
+
+    if data.get("intent") not in intents:
+        data["intent"] = None
+
+    print(user_msg)
+    print(data)
+    return data
 
 # --- Node 2: Itinerary Node ---
 def itinerary_node(state):
     user_msg = state["messages"][-1].content
-    reply = llm.invoke(f"Create a short travel itinerary based on this: {user_msg}")
+
+    itinerary_prompt = f"""
+    You are a travel planner. Create a travel itinerary based on this:
+    {user_msg}
+
+    Include:
+    - Tourist spots to visit each day
+    - Suggested times for each activity
+    - Any tips or recommendations
+    Respond in a friendly, readable itinerary format.
+    """
+
+    reply = llm.invoke(itinerary_prompt)
     return {"messages": [reply]}
 
 # --- Node 3: Booking Node ---
@@ -61,7 +81,7 @@ def general_chat(state):
 def fallback(state):
     return {
         "messages": [
-            {"role": "assistant", "content": "I'm sorry, could you please clarify your request?"}
+            {"role": "assistant", "content": "I am sorry I couldn't get what you were trying to say could you please clarify?"}
         ]
     }
 
@@ -72,7 +92,7 @@ graph.add_node("gather_intent", gather_intent)
 graph.add_node("itinerary", itinerary_node)
 graph.add_node("booking", booking_node)
 graph.add_node("knowledge", knowledge_node)
-graph.add_node("chat", general_chat)
+graph.add_node("general", general_chat)
 graph.add_node("fallback", fallback)
 
 graph.add_edge(START, "gather_intent")
@@ -86,7 +106,7 @@ def route_after_intent(state):
     elif intent == "knowledge":
         return "knowledge"
     elif intent == "general":
-        return "chat"
+        return "general"
     else:
         return "fallback"
 
@@ -94,7 +114,7 @@ graph.add_conditional_edges("gather_intent", route_after_intent)
 graph.add_edge("itinerary", END)
 graph.add_edge("booking", END)
 graph.add_edge("knowledge", END)
-graph.add_edge("chat", END)
+graph.add_edge("general", END)
 graph.add_edge("fallback", END)
 
 agent_graph = graph.compile()
