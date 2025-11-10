@@ -8,7 +8,7 @@ def gather_intent_prompt(user_prompt):
 
     You must classify the message into one of the following categories:
 
-    1. **Itinerary generation** — The user wants you to plan or suggest a trip, itinerary, or travel plan.  
+    1. **Itinerary generation** — The user wants you to plan or suggest a trip, itinerary, or travel plan.
     Example: “Plan me a 3-day trip to Gujarat”, “Make an itinerary for my vacation in Goa”, "Itinerary planning".
 
     2. **Booking** — The user is asking about or requesting booking information for flights or hotels (IMP NOTE: Only flights or hotels nothing else).  
@@ -21,9 +21,10 @@ def gather_intent_prompt(user_prompt):
     Example: “Hello”, “How are you?”, “Good morning”.
 
     IMP Notes:
-    - Itinerary planning goes to itinerary but itinerary suggestions goes to knowledge.
+    - Itinerary planning goes to itinerary but itinerary suggestions/comparisons goes to knowledge.
     - Suggest me flights/hotels goes to booking but suggest me trains/cabs/any other goes to knowledge. 
-
+    - Only return itinerary when the user does not need any recommendations, suggestions, comparisons etc and expects
+    the generated itinerary in the next response
 
     If you cannot confidently determine the intent, set the value to `null`.
 

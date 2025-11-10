@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph, MessagesState, START, END
+from langchain.messages import AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from mock_apis import mock_flights_api, mock_hotels_api
 from dotenv import load_dotenv
@@ -63,7 +64,8 @@ def booking_node(state):
         )
     else:
         response = "Please specify whether you want to check flights or hotels."
-    return {"messages": [{"role": "assistant", "content": response}]}
+
+    return {"messages": [AIMessage(content=response)]}
 
 # --- Node 4: Knowledge Node ---
 def knowledge_node(state):
@@ -81,7 +83,7 @@ def general_chat(state):
 def fallback(state):
     return {
         "messages": [
-            {"role": "assistant", "content": "I am sorry I couldn't get what you were trying to say could you please clarify?"}
+            AIMessage(content= "I am sorry I couldn't get what you were trying to say could you please clarify?")
         ]
     }
 
