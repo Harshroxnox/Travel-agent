@@ -19,10 +19,10 @@ llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 intents = ["booking", "itinerary", "knowledge", "general"]
 
 # --- Node 1: Gather Intent ---
-def gather_intent(state):
+async def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
 
-    response = llm.invoke(gather_intent_prompt(user_msg)).content
+    response = (await llm.ainvoke(gather_intent_prompt(user_msg))).content
     
     try:
         data = json.loads(response)
@@ -38,7 +38,7 @@ def gather_intent(state):
     return data
 
 # --- Node 2: Itinerary Node ---
-def itinerary_node(state):
+async def itinerary_node(state):
     user_msg = state["messages"][-1].content
 
     itinerary_prompt = f"""
@@ -52,7 +52,7 @@ def itinerary_node(state):
     Respond in a friendly, readable itinerary format.
     """
 
-    reply = final_llm.invoke(itinerary_prompt)
+    reply = await final_llm.ainvoke(itinerary_prompt)
     return {"messages": [reply]}
 
 # --- Node 3: Booking Node ---
@@ -74,7 +74,7 @@ def booking_node(state):
     return {"messages": [AIMessage(content=response)]}
 
 # --- Node 4: Knowledge Node ---
-def knowledge_node(state):
+async def knowledge_node(state):
     user_msg = state["messages"][-1].content
 
     check_web_search_prompt = f"""
@@ -92,12 +92,12 @@ def knowledge_node(state):
     Respond with only **"yes"** or **"no"** — no explanations.
     """
 
-    web_search_decision = llm.invoke(check_web_search_prompt).content.strip().lower()
+    web_search_decision = (await llm.ainvoke(check_web_search_prompt)).content.strip().lower()
     print(f"{user_msg}: Live search: {web_search_decision}")
 
     if "yes" in web_search_decision:
         try:
-            web_context = web_search(user_msg)
+            web_context = await web_search(user_msg)
             final_prompt = f"""
             You are an AI assistant specializing in travel and general queries.
             Use the web search results below to answer the user's question.
@@ -108,11 +108,9 @@ def knowledge_node(state):
             User question:
             {user_msg}
 
-            Guidelines:
-            - Give a concise, accurate, and user-friendly answer.
-            - Cite or mention relevant information from the web results naturally (no raw URLs).
             - If the web information seems irrelevant or insufficient, combine it with your own knowledge.
-            - Do not mention that the data came from a web search.
+            - Try to be descriptive and informative providing useful details relating to user's query or travel.
+            - Try to answer in bullet points in a presentable format
             """
         except Exception as e:
             final_prompt = f"The web search failed with error: {e}. Still try to answer this: {user_msg}"
@@ -122,13 +120,13 @@ def knowledge_node(state):
         Answer this general travel question: {user_msg}
         """
 
-    reply = final_llm.invoke(final_prompt)
+    reply = await final_llm.ainvoke(final_prompt)
     return {"messages": [reply]}
 
 # --- Node 5: General Chat ---
-def general_chat(state):
+async def general_chat(state):
     msg = state["messages"][-1].content
-    reply = final_llm.invoke(msg)
+    reply = await final_llm.ainvoke(msg)
     return {"messages": [reply]}
 
 # --- Node 6: Fallback ---

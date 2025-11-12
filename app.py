@@ -1,5 +1,6 @@
 import streamlit as st
 from agent_graph import agent_graph
+import asyncio
 
 
 # Set page title and layout
@@ -26,21 +27,25 @@ if user_input:
 if st.session_state.chat_history and st.session_state.chat_history[-1]["role"] == "user":
     user_input = st.session_state.chat_history[-1]["content"]
 
-    with st.chat_message("assistant"):
-        response_placeholder = st.empty()
+    async def stream_response(user_input):
         full_response = ""
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
+            
+            # Streaming loop
+            async for message_chunk, metadata in agent_graph.astream(
+                {"messages": [{"role": "user", "content": user_input}]},
+                stream_mode="messages", 
+            ):  
+                tags = metadata.get("tags", [])
+                if "internal" not in tags:
+                    full_response += message_chunk.content
+                    response_placeholder.markdown(full_response)
+        return full_response
+    
+    full_response = asyncio.run(stream_response(user_input))
 
-        # Streaming loop
-        for message_chunk, metadata in agent_graph.stream(
-            {"messages": [{"role": "user", "content": user_input}]},
-            stream_mode="messages", 
-        ):  
-            tags = metadata.get("tags", [])
-            if "internal" not in tags:
-                full_response += message_chunk.content
-                response_placeholder.markdown(full_response)
-
-        # Save final response to history
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
-        st.rerun()
+    # Save final response to history
+    st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+    st.rerun()
 
