@@ -30,3 +30,5 @@ streamlit run app.py
 - What is my current place, date and time?
 - What is the distance from Saputara to Ahmedabad?
 - What is the current news in Delhi?
+- What was my previous message?
+- What are your features?
