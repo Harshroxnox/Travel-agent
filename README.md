@@ -26,9 +26,6 @@ streamlit run app.py
 ```
 
 # Point of failures
-- What is the weather in Delhi now?
 - What is my current place, date and time?
-- What is the distance from Saputara to Ahmedabad?
-- What is the current news in Delhi?
 - What was my previous message?
 - What are your features?
