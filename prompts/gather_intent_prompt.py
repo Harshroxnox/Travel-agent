@@ -31,7 +31,7 @@ def gather_intent_prompt(user_prompt):
     ---
 
     ### Output format:
-    You must reply **only** with a valid JSON string. NO text. NO explanation. NO markdown:
+    You must reply **only** with a valid JSON string. Don't give markdown JSON just string:
 
     {{
         "intent": "itinerary" | "booking" | "knowledge" | "general" | null

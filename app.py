@@ -6,7 +6,6 @@ from agent_graph import agent_graph
 st.set_page_config(page_title="LangGraph Travel Agent", layout="centered")
 st.title("🧳 Travel Agent Assistant")
 
-response_nodes = ["itinerary", "booking", "knowledge", "general", "fallback"]
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -36,7 +35,8 @@ if st.session_state.chat_history and st.session_state.chat_history[-1]["role"] =
             {"messages": [{"role": "user", "content": user_input}]},
             stream_mode="messages", 
         ):  
-            if metadata["langgraph_node"] in response_nodes:
+            tags = metadata.get("tags", [])
+            if "internal" not in tags:
                 full_response += message_chunk.content
                 response_placeholder.markdown(full_response)
 

@@ -1,14 +1,20 @@
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain.messages import AIMessage
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
-from mock_apis import mock_flights_api, mock_hotels_api
+from tools.mock_apis import mock_flights_api, mock_hotels_api
+from tools.web_search import web_search
 from dotenv import load_dotenv
 from prompts.gather_intent_prompt import gather_intent_prompt
 import json
 
 load_dotenv()
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
+llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
+
+# final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
+# llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 
 intents = ["booking", "itinerary", "knowledge", "general"]
 
@@ -46,7 +52,7 @@ def itinerary_node(state):
     Respond in a friendly, readable itinerary format.
     """
 
-    reply = llm.invoke(itinerary_prompt)
+    reply = final_llm.invoke(itinerary_prompt)
     return {"messages": [reply]}
 
 # --- Node 3: Booking Node ---
@@ -70,13 +76,59 @@ def booking_node(state):
 # --- Node 4: Knowledge Node ---
 def knowledge_node(state):
     user_msg = state["messages"][-1].content
-    reply = llm.invoke(f"Answer this general travel question: {user_msg}")
+
+    check_web_search_prompt = f"""
+    You are an AI assistant specializing in travel and general queries deciding whether to use live web search.
+
+    User query: "{user_msg}"
+
+    If answering this question accurately requires *current, real-time, or location-specific information* 
+    (e.g. flight status, hotel availability, weather, news, events, or prices),
+    reply **"yes"**.
+
+    If the question can be answered from general travel knowledge or reasoning 
+    without fresh data, reply **"no"**.
+
+    Respond with only **"yes"** or **"no"** — no explanations.
+    """
+
+    web_search_decision = llm.invoke(check_web_search_prompt).content.strip().lower()
+    print(f"{user_msg}: Live search: {web_search_decision}")
+
+    if "yes" in web_search_decision:
+        try:
+            web_context = web_search(user_msg)
+            final_prompt = f"""
+            You are an AI assistant specializing in travel and general queries.
+            Use the web search results below to answer the user's question.
+
+            Web search results:
+            {web_context}
+
+            User question:
+            {user_msg}
+
+            Guidelines:
+            - Give a concise, accurate, and user-friendly answer.
+            - Cite or mention relevant information from the web results naturally (no raw URLs).
+            - If the web information seems irrelevant or insufficient, combine it with your own knowledge.
+            - Do not mention that the data came from a web search.
+            """
+        except Exception as e:
+            final_prompt = f"The web search failed with error: {e}. Still try to answer this: {user_msg}"
+    else:
+        final_prompt = f"""
+        You are an AI assistant specializing in travel and general queries.
+        Answer this general travel question: {user_msg}
+        """
+
+    reply = final_llm.invoke(final_prompt)
     return {"messages": [reply]}
 
 # --- Node 5: General Chat ---
 def general_chat(state):
     msg = state["messages"][-1].content
-    reply = llm.invoke(msg)
+    reply = final_llm.invoke(msg)
     return {"messages": [reply]}
 
 # --- Node 6: Fallback ---
