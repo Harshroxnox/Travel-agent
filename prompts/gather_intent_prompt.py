@@ -1,9 +1,7 @@
 
 def gather_intent_prompt(user_prompt):
     return f"""
-    You are an intent classification model for a travel assistant.
-
-    Your task is to identify the user's intent from this message.
+    You are an intent classification model for a travel assistant. Your task is to identify the user's intent from this message.
     **Users Message** - {user_prompt}
 
     You must classify the message into one of the following categories:
@@ -25,7 +23,7 @@ def gather_intent_prompt(user_prompt):
     If you cannot confidently determine the intent, set the value to `null`.
 
     ### Output format:
-    You must reply **only** with a valid JSON string. Don't give markdown JSON just string:
+    You must reply **only** with a valid JSON string. Don't give markdown JSON just string.
     {{
         "intent": "itinerary" | "knowledge" | "general" | null
     }}

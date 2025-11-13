@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 import asyncio
 import aiohttp
 
 load_dotenv()
 
-llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
+# summarizer_llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
+summarizer_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", tags=["internal"])
 
 
 async def extract_data(query, crawled_site_data, url):
@@ -30,7 +32,8 @@ async def extract_data(query, crawled_site_data, url):
         {crawled_site_data}
     """
 
-    reply = await llm.ainvoke(extract_data_prompt)
+    reply = await summarizer_llm.ainvoke(extract_data_prompt)
+    print(reply.usage_metadata)
     ans += reply.content
 
     return ans

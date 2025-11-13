@@ -10,11 +10,10 @@ import json
 
 load_dotenv()
 
-final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
 llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 
+final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
 # final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
-# llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 
 intents = ["itinerary", "knowledge", "general"]
 
@@ -22,7 +21,9 @@ intents = ["itinerary", "knowledge", "general"]
 async def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
 
-    response = (await llm.ainvoke(gather_intent_prompt(user_msg))).content
+    reply = await llm.ainvoke(gather_intent_prompt(user_msg))
+    response = reply.content
+    print(reply.usage_metadata)
     
     try:
         data = json.loads(response)
@@ -53,6 +54,7 @@ async def itinerary_node(state):
     """
 
     reply = await final_llm.ainvoke(itinerary_prompt)
+    print(reply.usage_metadata)
     return {"messages": [reply]}
 
 # --- Node 3: Knowledge Node ---
@@ -79,6 +81,7 @@ async def knowledge_node(state):
         final_prompt = f"The web search failed with error: {e}. Still try to answer this: {user_msg}"
 
     reply = await final_llm.ainvoke(final_prompt)
+    print(reply.usage_metadata)
     return {"messages": [reply]}
 
 # --- Node 4: General Chat ---
@@ -89,6 +92,7 @@ async def general_chat(state):
     Answer this general question: {user_msg}
     """
     reply = await final_llm.ainvoke(final_prompt)
+    print(reply.usage_metadata)
     return {"messages": [reply]}
 
 # --- Node 5: Fallback ---
