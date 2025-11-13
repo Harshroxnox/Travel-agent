@@ -8,50 +8,25 @@ def gather_intent_prompt(user_prompt):
 
     You must classify the message into one of the following categories:
 
-    1. **Itinerary generation** — The user wants you to plan or suggest a trip, itinerary, or travel plan.
-    Example: “Plan me a 3-day trip to Gujarat”, “Make an itinerary for my vacation in Goa”, "Itinerary planning".
+    1. **Itinerary generation** — The user wants you to plan a trip, itinerary, or travel plan.
+    Example: “Plan me a 3-day trip to Gujarat”, “Make an itinerary for my vacation in Goa”.
 
-    2. **Booking** — The user is asking about or requesting booking information for flights or hotels (IMP NOTE: Only flights or hotels nothing else).  
-    Example: “Show me flights from Delhi to Mumbai”, “Find hotels near Gandhinagar”, "Suggest some hotels near me".
+    2. **Knowledge** — The user is asking questions that require web search.
+    Example: "Suggest me hotels near Delhi, Best places to travel, Show me flights, Current news, weather etc."
 
-    3. **General Questions/Enquiry/Suggestions** — The user is asking informational questions or suggestions related to travel or general queries.  
-    Example: “Do I need a visa for Japan?”, “Best time to visit Himachal Pradesh?”, "Suggest me some cool places to travel?".
-
-    4. **General conversation** — Greetings or small talk not related to travel tasks.  
-    Example: “Hello”, “How are you?”, “Good morning”.
+    4. **General** — Any user query that you can answer and does not require live web search 
 
     IMP Notes:
     - Itinerary planning goes to itinerary but itinerary suggestions/comparisons goes to knowledge.
-    - Suggest me flights/hotels goes to booking but suggest me trains/cabs/any other goes to knowledge. 
+    - Suggest me flights/hotels/trains/cabs/any other goes to knowledge. 
     - Only return itinerary when the user does not need any recommendations, suggestions, comparisons etc and expects
     the generated itinerary in the next response
 
     If you cannot confidently determine the intent, set the value to `null`.
 
-    ---
-
     ### Output format:
     You must reply **only** with a valid JSON string. Don't give markdown JSON just string:
-
     {{
-        "intent": "itinerary" | "booking" | "knowledge" | "general" | null
-    }}
-
-    ---
-
-    ### Example Inputs and Outputs
-
-    **Input:**  
-    “Hey there!”  
-    **Output:**  
-    {{
-        "intent": "general" 
-    }}
-
-    **Input:**  
-    “asdfghjk”  
-    **Output:**  
-    {{
-        "intent": null
+        "intent": "itinerary" | "knowledge" | "general" | null
     }}
     """

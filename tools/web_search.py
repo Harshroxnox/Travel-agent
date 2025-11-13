@@ -55,9 +55,11 @@ async def web_search(query):
             }
         ) as response:
             results = await response.json()
+    print("Web Search Completed")
 
     tasks = [extract_data(query, result["text"], result["url"]) for result in results["results"]]
     replies = await asyncio.gather(*tasks)
+    print("Summarization of results done")
 
     answer = ""
     for reply in replies:
