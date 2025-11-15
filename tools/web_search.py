@@ -4,26 +4,74 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 import asyncio
 import aiohttp
+import re
+from markdownify import markdownify as md
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
 # summarizer_llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 summarizer_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", tags=["internal"])
 
+def clean_markdown(text: str) -> str:
+    # 1) Remove code blocks ```...``` completely
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+
+    # 2) Remove images ![alt](url)
+    text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
+
+    # 3) Remove links [text](url) → keep only "text"
+    text = re.sub(r"\[(.*?)\]\((.*?)\)", r"\1", text)
+
+    # 4) Remove empty []() links
+    text = re.sub(r"\[\]\(.*?\)", "", text)
+
+    # 5) Convert leftover markdown → plain text
+    html = md(text)
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text(separator=" ")
+
+    # 6) Remove ASCII noise / random characters lines
+    cleaned_lines = []
+    for line in text.split("\n"):
+        # noise threshold: remove lines with <30% letters
+        if len(line.strip()) == 0:
+            continue
+        
+        letters = sum(c.isalpha() for c in line)
+        ratio = letters / max(len(line), 1)
+
+        if ratio < 0.3:
+            continue
+        
+        cleaned_lines.append(line.strip())
+
+    # 7) Remove duplicate lines
+    final = []
+    seen = set()
+    for line in cleaned_lines:
+        if line not in seen:
+            seen.add(line)
+            final.append(line)
+
+    return "\n".join(final)
+
 
 async def extract_data(query, crawled_site_data, url):
     ans = f"Url: {url} \n\n"
+    crawled_site_data = clean_markdown(crawled_site_data)
 
     extract_data_prompt = f"""
         You are a data cleaning/extraction assistant.
 
         Task:
-        Given the user's query and the crawled site data, extract all the relevant information from the site data.
+        Given the user's query and the crawled site data, extract all the relevant information that could
+        be useful in answering users query from the site data.
 
         Instructions:
         - Clean the crawled data so that it becomes readable
         - Preserve key facts, figures, or context.
-        - Try to keep travel related info or other info related to users query
+        - Keep information related to users query
 
         User Query:
         {query}

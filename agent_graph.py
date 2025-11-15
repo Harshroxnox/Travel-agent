@@ -2,7 +2,6 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
-from tools.mock_apis import mock_flights_api, mock_hotels_api
 from tools.web_search import web_search
 from dotenv import load_dotenv
 from prompts.gather_intent_prompt import gather_intent_prompt
@@ -16,10 +15,11 @@ current_date = current_date.strftime("%d %B %Y")
 
 load_dotenv()
 
-llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
+# llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 
-final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
-# final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
+# final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
+final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
 
 intents = ["itinerary", "knowledge", "general"]
 
@@ -83,8 +83,6 @@ async def itinerary_node(state):
         f"Search Query: {q}\nResult:\n{r}\n\n" 
         for q, r in zip(search_queries, results)
     )
-
-    print(combined_results)
 
     # STEP 3 — Final LLM call to generate itinerary using real search results
     itinerary_prompt = f"""

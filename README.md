@@ -21,8 +21,13 @@ pip install -r requirements.txt
 ```
 
 Run 
+UI based
 ```bash
-streamlit run app.py
+langgraph dev
+```
+OR Terminal based. Specify the input inside agent_stream function
+```bash
+python3 app.py
 ```
 
 # Point of failures
