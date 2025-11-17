@@ -47,7 +47,7 @@ async def gather_intent(state):
 async def itinerary_node(state):
     user_msg = state["messages"][-1].content
 
-    # STEP 1 — Ask LLM to generate 1–4 search queries
+    # STEP 1 — Ask LLM to generate 1–6 search queries
     search_prompt = f"""
     You are a travel planner. Based on this user request:
     "{user_msg}"
@@ -55,7 +55,15 @@ async def itinerary_node(state):
     User's Location: {user_location}
     Current Date: {current_date}
 
-    Generate up to 4 web search queries we need to plan the itinerary.
+    Generate up to 5 web search queries that would be helpful to plan the itinerary.
+    
+    The queries should help plan a detailed travel itinerary with:
+    - Day-wise breakdown
+    - Tourist spots
+    - Suggested times
+    - Travel options
+    - Hotels and flights suggestions along with prices
+    - Tips, cautions, and alternatives
     
     Always output as a JSON list of strings.
     Output Format JSON array. Return only a single JSON array string. No markdown
@@ -66,8 +74,8 @@ async def itinerary_node(state):
     ]
     """
 
-    queries_response = await final_llm.ainvoke(search_prompt)
-
+    queries_response = await llm.ainvoke(search_prompt)
+    print(queries_response.content)
     try:
         search_queries = json.loads(queries_response.content)
     except:

@@ -23,7 +23,7 @@ pip install -r requirements.txt
 Run 
 UI based
 ```bash
-langgraph dev
+langgraph dev --allow-blocking
 ```
 OR Terminal based. Specify the input inside agent_stream function
 ```bash

@@ -57,9 +57,7 @@ def clean_markdown(text: str) -> str:
     return "\n".join(final)
 
 
-async def extract_data(query, crawled_site_data, url):
-    ans = f"Url: {url} \n\n"
-    crawled_site_data = clean_markdown(crawled_site_data)
+async def extract_data(query, crawled_site_data):
 
     extract_data_prompt = f"""
         You are a data cleaning/extraction assistant.
@@ -82,9 +80,8 @@ async def extract_data(query, crawled_site_data, url):
 
     reply = await summarizer_llm.ainvoke(extract_data_prompt)
     print(reply.usage_metadata)
-    ans += reply.content
 
-    return ans
+    return reply.content
 
 
 async def web_search(query):
@@ -108,14 +105,12 @@ async def web_search(query):
             results = await response.json()
     print("Web Search Completed")
 
-    tasks = [extract_data(query, result["text"], result["url"]) for result in results["results"]]
-    replies = await asyncio.gather(*tasks)
-    print("Summarization of results done")
+    cleaned_web_search = ""
+    for result in results["results"]:
+        cleaned_web_search += f"Url:{result["url"]}\nText:{clean_markdown(result["text"])}\n\n"
 
-    answer = ""
-    for reply in replies:
-        answer += reply
-        answer += "\n\n"
+    answer = await extract_data(query, cleaned_web_search)
+    print("Summarization of results done")
 
     return answer
 
