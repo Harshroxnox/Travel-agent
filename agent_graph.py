@@ -3,10 +3,15 @@ from langchain.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tools.web_search import web_search
+from tools.hotels import get_hotels
+from tools.flights import get_flights
 from dotenv import load_dotenv
 from prompts.gather_intent_prompt import gather_intent_prompt
+from prompts.planner_prompt import planner_prompt
+from utils.utils import strip_code_fences
 import json
 import asyncio
+
 from datetime import date
 
 user_location = "Delhi, India"
@@ -15,20 +20,21 @@ current_date = current_date.strftime("%d %B %Y")
 
 load_dotenv()
 
+intents = ["itinerary", "knowledge", "general"]
+
 # llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 
 # final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
 final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
 
-intents = ["itinerary", "knowledge", "general"]
 
 # --- Node 1: Gather Intent ---
 async def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
 
     reply = await llm.ainvoke(gather_intent_prompt(user_msg))
-    response = reply.content
+    response = strip_code_fences(reply.content)
     
     try:
         data = json.loads(response)
@@ -48,54 +54,48 @@ async def itinerary_node(state):
     user_msg = state["messages"][-1].content
 
     # STEP 1 — Ask LLM to generate 1–6 search queries
-    search_prompt = f"""
-    You are a travel planner. Based on this user request:
-    "{user_msg}"
-    
-    User's Location: {user_location}
-    Current Date: {current_date}
+    plan_prompt = planner_prompt(user_msg, user_location, current_date)
 
-    Generate up to 5 web search queries that would be helpful to plan the itinerary.
-    
-    The queries should help plan a detailed travel itinerary with:
-    - Day-wise breakdown
-    - Tourist spots
-    - Suggested times
-    - Travel options
-    - Hotels and flights suggestions along with prices
-    - Tips, cautions, and alternatives
-    
-    Always output as a JSON list of strings.
-    Output Format JSON array. Return only a single JSON array string. No markdown
-    [
-        "query1",
-        "query2",
-        ...
-    ]
-    """
+    planner_response = await llm.ainvoke(plan_prompt)
+    print(strip_code_fences(planner_response.content))
 
-    queries_response = await llm.ainvoke(search_prompt)
-    print(queries_response.content)
     try:
-        search_queries = json.loads(queries_response.content)
+        data = json.loads(strip_code_fences(planner_response.content))
     except:
-        search_queries = []
+        return {"messages": [
+            AIMessage(content="I could not understand the travel details. Please rephrase your request.")
+        ]}
+
+    search_queries = data.get("search_queries", [])
+    flight_inputs = data.get("flight_inputs", {})
+    hotel_inputs = data.get("hotel_inputs", {})
 
     # STEP 2 — Run all web searches in parallel
     # Each is an async tool call
-    tasks = [web_search(query=q) for q in search_queries]
-    results = await asyncio.gather(*tasks)
+    search_tasks = [web_search(query=q) for q in search_queries]
+    flight_task = get_flights(**flight_inputs)
+    hotel_task = get_hotels(**hotel_inputs)
+    
+    (
+        search_results,
+        flight_data,
+        hotel_data
+    ) = await asyncio.gather(
+        asyncio.gather(*search_tasks),
+        flight_task,
+        hotel_task
+    )
 
     # Concatenate results into a single string
     combined_results = "\n\n".join(
         f"Search Query: {q}\nResult:\n{r}\n\n" 
-        for q, r in zip(search_queries, results)
+        for q, r in zip(search_queries, search_results)
     )
 
     # STEP 3 — Final LLM call to generate itinerary using real search results
     itinerary_prompt = f"""
     You are an AI assistant specializing in travel and general queries.
-    Use the web search results below to generate an itinerary along with hotels and transporation options.
+    Use the web search results data below to generate an itinerary along with hotels and transporation options.
 
     User's request:
     {user_msg}
@@ -105,6 +105,12 @@ async def itinerary_node(state):
 
     Web search results:
     {combined_results}
+
+    Flight Options:
+    {flight_data}
+
+    Hotel Options:
+    {hotel_data}
 
     Now generate a detailed travel itinerary:
     - Day-wise breakdown
