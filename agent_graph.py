@@ -1,3 +1,4 @@
+from typing import Dict, Optional
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain.messages import AIMessage
 from langchain_openai import ChatOpenAI
@@ -8,7 +9,8 @@ from tools.flights import get_flights
 from dotenv import load_dotenv
 from prompts.gather_intent_prompt import gather_intent_prompt
 from prompts.planner_prompt import planner_prompt
-from utils.utils import strip_code_fences
+from prompts.itinerary_prompt import itinerary_prompt
+from utils.utils import strip_code_fences, preprocess_hotels
 import json
 import asyncio
 
@@ -28,6 +30,9 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 # final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
 final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
 
+# define state
+class AgentState(MessagesState):
+    itinerary: Optional[Dict]
 
 # --- Node 1: Gather Intent ---
 async def gather_intent(state):
@@ -53,7 +58,7 @@ async def gather_intent(state):
 async def itinerary_node(state):
     user_msg = state["messages"][-1].content
 
-    # STEP 1 — Ask LLM to generate 1–6 search queries
+    # STEP 1 — Ask LLM for search queries
     plan_prompt = planner_prompt(user_msg, user_location, current_date)
 
     planner_response = await llm.ainvoke(plan_prompt)
@@ -70,8 +75,7 @@ async def itinerary_node(state):
     flight_inputs = data.get("flight_inputs", {})
     hotel_inputs = data.get("hotel_inputs", {})
 
-    # STEP 2 — Run all web searches in parallel
-    # Each is an async tool call
+    # STEP 2 — parallel tool calls
     search_tasks = [web_search(query=q) for q in search_queries]
     flight_task = get_flights(**flight_inputs)
     hotel_task = get_hotels(**hotel_inputs)
@@ -85,49 +89,35 @@ async def itinerary_node(state):
         flight_task,
         hotel_task
     )
-
-    # Concatenate results into a single string
+    
+    llm_hotel_data = preprocess_hotels(hotel_data)
     combined_results = "\n\n".join(
         f"Search Query: {q}\nResult:\n{r}\n\n" 
         for q, r in zip(search_queries, search_results)
     )
 
-    # STEP 3 — Final LLM call to generate itinerary using real search results
-    itinerary_prompt = f"""
-    You are an AI assistant specializing in travel and general queries.
-    Use the web search results data below to generate an itinerary along with hotels and transporation options.
+    # STEP 3 — Final LLM call to generate itinerary
+    trip_prompt = itinerary_prompt(user_msg, user_location, current_date, combined_results, flight_data, llm_hotel_data)
 
-    User's request:
-    {user_msg}
-
-    User's Location: {user_location}
-    Current Date: {current_date}
-
-    Web search results:
-    {combined_results}
-
-    Flight Options:
-    {flight_data}
-
-    Hotel Options:
-    {hotel_data}
-
-    Now generate a detailed travel itinerary:
-    - Day-wise breakdown
-    - Tourist spots
-    - Suggested times
-    - Travel options
-    - Hotels and flights suggestions along with prices
-    - Tips, cautions, and alternatives
-
-    If the user doesn't specify the exact details then assume good defaults.
-    Try to be descriptive and informative providing useful details relating to user's query or travel.
-    """
-
-    final_reply = await final_llm.ainvoke(itinerary_prompt)
+    final_reply = await final_llm.ainvoke(trip_prompt)
     print("Final LLM Usage:", final_reply.usage_metadata)
 
-    return {"messages": [final_reply]}
+    try:
+        ans = json.loads(strip_code_fences(final_reply.content))
+    except:
+        return {"messages": [
+            AIMessage(content="I could not understand the travel details. Please rephrase your request.")
+        ]}
+    
+    ans["flights"] = flight_data
+    ans["hotels"] = hotel_data
+
+    return {
+        "messages": [
+            AIMessage(content="I have generated the complete itinerary for you.")
+        ],
+        "itinerary": ans
+    }
 
 # --- Node 3: Knowledge Node ---
 async def knowledge_node(state):
@@ -176,7 +166,7 @@ def fallback(state):
     }
 
 # --- Graph Setup ---
-graph = StateGraph(MessagesState)
+graph = StateGraph(AgentState)
 
 graph.add_node("gather_intent", gather_intent)
 graph.add_node("itinerary", itinerary_node)

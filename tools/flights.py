@@ -38,7 +38,6 @@ async def get_flights(
         "outbound_date": outbound_date,
         "api_key": os.getenv("SEARCHAPI_KEY")
     }
-    print(params)
 
     if flight_type == "round_trip":
         params["return_date"] = return_date
@@ -59,4 +58,5 @@ async def get_flights(
                 "total_flights_found": len(data.get("best_flights", [])),
                 "top_flights": flights,
             }
+            print(params)
             return results

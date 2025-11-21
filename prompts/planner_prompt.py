@@ -18,10 +18,10 @@ def planner_prompt(user_msg, user_location, current_date):
     The queries should help plan a detailed travel itinerary with:
     - Day-wise breakdown
     - Tourist spots
-    - Suggested times
-    - Travel options
-    - Visa requirements if necessary
     - Tips, cautions, and alternatives
+    - Suggested times
+    - Visa requirements if necessary
+    - Travel options
 
     2. **Flight tool inputs**
     Create values for the function get_flights:

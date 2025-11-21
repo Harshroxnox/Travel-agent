@@ -12,7 +12,7 @@ def gather_intent_prompt(user_prompt):
     2. **Knowledge** — The user is asking questions that require web search.
     Example: "Suggest me hotels near Delhi, Best places to travel, Show me flights, Current news, weather etc."
 
-    4. **General** — Any user query that you can answer and does not require live web search 
+    3. **General** — Any user query that you can answer and does not require live web search 
 
     IMP Notes:
     - Itinerary planning goes to itinerary but itinerary suggestions/comparisons goes to knowledge.
