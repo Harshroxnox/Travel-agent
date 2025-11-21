@@ -17,7 +17,7 @@ def preprocess_hotels(hotels):
             "description": hotel.get("description"),
             "city": hotel.get("city"),
             "country": hotel.get("country"),
-            "price_per_night": hotel["price_per_night"]["price"],
+            "price_per_night": hotel.get("price_per_night", {}).get("price"),
             "hotel_class": hotel.get("hotel_class"),
             "rating": hotel.get("rating"),
             "reviews": hotel.get("reviews")

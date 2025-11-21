@@ -1,31 +1,30 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useState, useEffect } from 'react'
-import data from "./data"
-import axios from 'axios';
+import { useContext } from 'react'
+import { useNavigate } from "react-router";
+import { AppContext } from "../context/AppContext";
 
 const ItineraryApp = () => {
-  const { itinerary, hotels, price_estimation, flights, other_sections } = data.itinerary;
-	let thread_id;
-	
-	const fetchData = async () => {
-		await axios.post('http://127.0.0.1:2024/threads', { 
-			thread_id: ""
-		})
-		.then(res => thread_id = res.data.thread_id)
-		.catch(err => console.log(err));
-	}
-
-  useEffect(()=>{
-		fetchData()
-  },[])
+	const { data } = useContext(AppContext);
+	const navigate = useNavigate();
+  const { itinerary, hotels, price_estimation, flights, other_sections } = data;
+	console.log(data)
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-10">
       {/* Section 1: Itinerary */}
       <section>
-        <h1 className="text-3xl font-bold mb-4">Itinerary</h1>
+				<div className="flex items-center justify-between">
+					<h1 className="text-3xl font-bold mb-4">Itinerary</h1>
+					<button
+						onClick={() => navigate("/")}
+						className="px-3 py-2 bg-gray-800 text-white rounded-xl shadow hover:bg-gray-900"
+					>
+						Chat
+					</button>
+				</div>
+
         {itinerary.map((day) => (
           <div key={day.day} className="mb-6 p-4 border rounded-xl shadow-sm">
             <h2 className="text-2xl font-semibold mb-2">Day {day.day}: {day.title}</h2>
