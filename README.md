@@ -33,4 +33,3 @@ python3 app.py
 # Point of failures
 - What is my current place, date and time?
 - What was my previous message?
-- What are your features?
