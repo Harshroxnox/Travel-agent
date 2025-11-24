@@ -107,7 +107,9 @@ async def web_search(query):
 
     cleaned_web_search = ""
     for result in results["results"]:
-        cleaned_web_search += f"Url:{result["url"]}\nText:{clean_markdown(result["text"])}\n\n"
+        url = result.get("url", "")
+        text = clean_markdown(result.get("text", ""))
+        cleaned_web_search += f"Url:{url}\nText:{text}\n\n"
 
     answer = await extract_data(query, cleaned_web_search)
     print("Summarization of results done")
