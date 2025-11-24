@@ -2,8 +2,6 @@
 def itinerary_prompt(user_msg, user_location, current_date, combined_results, flight_data, hotel_data):
     return f"""
     You are an AI travel-planning assistant.  
-    Using the web search results, flight data, hotel data and your knowledge to 
-    generate a complete travel itinerary and other sections in provided JSON Format.
 
     User's request:
     {user_msg}
@@ -19,15 +17,6 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
 
     Hotel Options:
     {hotel_data}
-
-    Now generate a detailed travel itinerary:
-    - Day-wise breakdown
-    - Tourist spots, activities with prices
-    - Suggested times
-    - Travel options
-    - Price breakdown
-    - Hotels and flights suggestions along with prices.
-    - Tips, cautions, and alternatives
 
     If the user doesn't specify the exact details then assume good defaults like 1 month into future 5-7 day trip.
     Try to be descriptive and informative providing useful details relating to user's query or travel.
