@@ -1,14 +1,40 @@
+from typing import Union
 from agent_graph import agent_graph
-import asyncio
+from langchain.messages import HumanMessage
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from pydantic import BaseModel
+import os
 
-async def agent_stream(user_input):
-    async for message_chunk, metadata in agent_graph.astream(
-        {"messages": [{"role": "user", "content": user_input}]},
-        stream_mode="messages", 
-    ):
-        tags = metadata.get("tags", [])
-        if "internal" not in tags:
-            print(message_chunk.content, end="")
-    print("\n")
+app = FastAPI()
 
-asyncio.run(agent_stream("Plan a 5 day trip to Bali"))
+load_dotenv()
+
+origins = [
+    os.getenv("FRONTEND_URL"),
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class Message(BaseModel):
+    content: str
+
+@app.get("/api/hello")
+def hello():
+    return {"Hello": "World"}
+
+@app.post("/api/invoke")
+async def invoke(msg: Message):
+    reply =  await agent_graph.ainvoke({
+        "messages": [
+            HumanMessage(content=msg.content)
+        ]
+    })
+    return reply

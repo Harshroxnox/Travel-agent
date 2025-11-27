@@ -8,8 +8,26 @@ import { AppContext } from "../context/AppContext";
 const ItineraryApp = () => {
 	const { data } = useContext(AppContext);
 	const navigate = useNavigate();
-  const { itinerary, hotels, price_estimation, flights, other_sections } = data;
-	console.log(data)
+
+	if (!data || Object.keys(data).length === 0) {
+		return (
+			<div className="p-6 max-w-5xl mx-auto">
+				<section>
+					<div className="flex items-center justify-between">
+						<h1 className="text-3xl font-bold mb-4">Itinerary</h1>
+						<button
+							onClick={() => navigate("/")}
+							className="px-3 py-2 bg-gray-800 text-white rounded-xl shadow hover:bg-gray-900"
+						>
+							Chat
+						</button>
+					</div>
+					<h1 className="text-2xl font-semibold">No Itinerary generated yet</h1>
+				</section>
+			</div>
+		);
+	}
+	const { itinerary, hotels, price_estimation, flights, other_sections } = data;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-10">
@@ -66,11 +84,11 @@ const ItineraryApp = () => {
         <h1 className="text-3xl font-bold mb-4">Hotels</h1>
         {hotels.map((hotel, idx) => (
           <div key={idx} className="mb-6 p-4 border rounded-xl shadow-sm">
-            <h2 className="text-2xl font-semibold">{hotel.name}</h2>
-            <p className="text-gray-600">{hotel.description}</p>
-            <p className="font-medium mt-2">City: {hotel.city}</p>
-            <p className="font-medium">Total Price: {hotel.total_price.price}</p>
-            <p className="mt-2 text-yellow-600">Rating: {hotel.rating} ⭐ ({hotel.reviews} reviews)</p>
+            <h2 className="text-2xl font-semibold">{hotel?.name ?? "NA"}</h2>
+            <p className="text-gray-600">{hotel?.description ?? "NA"}</p>
+            <p className="font-medium mt-2">City: {hotel?.city ?? "NA"}</p>
+            <p className="font-medium">Total Price: {hotel?.total_price?.price ?? "NA"}</p>
+            <p className="mt-2 text-yellow-600">Rating: {hotel?.rating ?? "NA"} ⭐ ({hotel?.reviews ?? "NA"} reviews)</p>
           </div>
         ))}
       </section>
@@ -80,14 +98,14 @@ const ItineraryApp = () => {
         <h1 className="text-3xl font-bold mb-4">Flights</h1>
         {flights.top_flights.map((flight, idx) => (
           <div key={idx} className="mb-6 p-4 border rounded-xl shadow-sm">
-            <h2 className="text-xl font-semibold mb-2">{flight.flights[0].airline} - {flight.flights[0].flight_number}</h2>
-            <p>Price: ${flight.price}</p>
-            <p>Duration: {flight.total_duration} mins</p>
+            <h2 className="text-xl font-semibold mb-2">{flight?.flights[0]?.airline ?? "NA"} - {flight?.flights[0]?.flight_number ?? "NA"}</h2>
+            <p>Price: ${flight?.price ?? "NA"}</p>
+            <p>Duration: {flight?.total_duration ?? "NA"} mins</p>
             <div className="mt-3">
               <p className="font-medium">Departure:</p>
-              <p>{flight.flights[0].departure_airport.name} at {flight.flights[0].departure_airport.time}</p>
+              <p>{flight?.flights[0]?.departure_airport?.name ?? "NA"} at {flight?.flights[0]?.departure_airport?.time ?? "NA"}</p>
               <p className="font-medium mt-2">Arrival:</p>
-              <p>{flight.flights[0].arrival_airport.name} at {flight.flights[0].arrival_airport.time}</p>
+              <p>{flight?.flights[0]?.arrival_airport?.name ?? "NA"} at {flight?.flights[0]?.arrival_airport?.time ?? "NA"}</p>
             </div>
           </div>
         ))}
