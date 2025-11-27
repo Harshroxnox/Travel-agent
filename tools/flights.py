@@ -11,6 +11,7 @@ async def get_flights(
     arrival_id: str,
     outbound_date: str,
     return_date: str,
+    currency: str,
     flight_type: str = "round_trip",
 ) -> Dict[str, Any]:
     """
@@ -33,6 +34,8 @@ async def get_flights(
     params = {
         "engine": "google_flights",
         "flight_type": flight_type,
+        "show_cheapest_flights": "true",
+        "currency": currency,
         "departure_id": departure_id,
         "arrival_id": arrival_id,
         "outbound_date": outbound_date,

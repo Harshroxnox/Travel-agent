@@ -27,6 +27,7 @@ def planner_prompt(user_msg, user_location, current_date):
     Create values for the function get_flights:
     - departure_id (str): IATA airport code of the origin (e.g., 'JFK').
     - arrival_id (str): IATA airport code of the destination (e.g., 'MAD').
+    - currency: ISO currency code according to users location
     - outbound_date (str): Outbound date in YYYY-MM-DD format.
     - return_date (str): Return date in YYYY-MM-DD format (use None for one-way).
     - flight_type (str): Type of trip — 'round_trip' or 'one_way'.
@@ -34,6 +35,7 @@ def planner_prompt(user_msg, user_location, current_date):
     3. **Hotel tool inputs**
     Create values for the function get_hotels:
     - query: Search query text. Example: "Hotels in Manhattan New York"
+    - currency: ISO currency code according to users location
     - check_in_date: Date in YYYY-MM-DD format
     - check_out_date: Date in YYYY-MM-DD format
     
@@ -52,12 +54,14 @@ def planner_prompt(user_msg, user_location, current_date):
         "flight_inputs": {{
             "departure_id": "string",
             "arrival_id": "string",
+            "currency": "string",
             "outbound_date": "YYYY-MM-DD",
             "return_date": "YYYY-MM-DD",
             "flight_type": "round_trip"
         }},
         "hotel_inputs": {{
             "query": "string",
+            "currency": "string",
             "check_in_date": "YYYY-MM-DD",
             "check_out_date": "YYYY-MM-DD"
         }}

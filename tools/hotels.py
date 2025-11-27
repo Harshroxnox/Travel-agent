@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-async def get_hotels(query: str, check_in_date: str, check_out_date: str) -> Dict[str, Any]:
+async def get_hotels(query: str, check_in_date: str, check_out_date: str, currency: str) -> Dict[str, Any]:
     """
     Search hotels using the Google Hotels engine via searchapi.io.
 
@@ -19,6 +19,9 @@ async def get_hotels(query: str, check_in_date: str, check_out_date: str) -> Dic
     url = "https://www.searchapi.io/api/v1/search"
     params = {
         "engine": "google_hotels",
+        "hotel_class": "3,4,5",
+        "currency": currency,
+        "rating": "8",
         "q": query,
         "check_in_date": check_in_date,
         "check_out_date": check_out_date,
@@ -33,6 +36,6 @@ async def get_hotels(query: str, check_in_date: str, check_out_date: str) -> Dic
                 return f"API request failed with status {resp.status}"
             
             hotels = hotels.get("properties", [])
-            hotels = hotels[:6]
+            hotels = hotels[:4]
             print(params)
             return hotels

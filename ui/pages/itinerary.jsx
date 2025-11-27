@@ -99,7 +99,7 @@ const ItineraryApp = () => {
         {flights.top_flights.map((flight, idx) => (
           <div key={idx} className="mb-6 p-4 border rounded-xl shadow-sm">
             <h2 className="text-xl font-semibold mb-2">{flight?.flights[0]?.airline ?? "NA"} - {flight?.flights[0]?.flight_number ?? "NA"}</h2>
-            <p>Price: ${flight?.price ?? "NA"}</p>
+            <p>Price: {price_estimation.currency} {flight?.price ?? "NA"}</p>
             <p>Duration: {flight?.total_duration ?? "NA"} mins</p>
             <div className="mt-3">
               <p className="font-medium">Departure:</p>
