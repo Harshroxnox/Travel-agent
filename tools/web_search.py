@@ -96,7 +96,7 @@ async def web_search(query):
             json={
                 "query": query,
                 "numResults": 2,
-                "type": "neural",
+                "type": "auto",
                 "contents": {
                     "text": True
                 }

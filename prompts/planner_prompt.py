@@ -13,11 +13,11 @@ def planner_prompt(user_msg, user_location, current_date):
 
     1. **Three web search queries**
     - Related to travel itinerary planning
-    - About tourist spots, things to do, timings, weather, visa, safety, transport
+    - About tourist spots/activities with pricing, things to do, timings, weather, visa, safety, transport
     
     The queries should help plan a detailed travel itinerary with:
     - Day-wise breakdown
-    - Tourist spots
+    - Tourist spots/activities with pricing
     - Tips, cautions, and alternatives
     - Suggested times
     - Visa requirements if necessary
