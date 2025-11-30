@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from crawl4ai import AsyncWebCrawler
 import os
 import asyncio
 import aiohttp
@@ -57,7 +58,7 @@ def clean_markdown(text: str) -> str:
     return "\n".join(final)
 
 
-async def extract_data(query, crawled_site_data):
+async def summarize(query, crawled_site_data):
 
     extract_data_prompt = f"""
         You are a data cleaning/extraction assistant.
@@ -83,6 +84,12 @@ async def extract_data(query, crawled_site_data):
 
     return reply.content
 
+async def extract(url):
+    async with AsyncWebCrawler() as crawler:
+        result = await crawler.arun(
+            url=url,
+        )      
+        return clean_markdown(result.markdown)
 
 async def web_search(query):
 
@@ -96,22 +103,22 @@ async def web_search(query):
             json={
                 "query": query,
                 "numResults": 2,
-                "type": "auto",
-                "contents": {
-                    "text": True
-                }
+                "type": "auto"
             }
         ) as response:
             results = await response.json()
     print("Web Search Completed")
 
+    urls = [r.get("url", "") for r in results["results"]]
+    # Extract the content from URLs in parallel 
+    tasks = [extract(url) for url in urls]
+    texts = await asyncio.gather(*tasks)
+
     cleaned_web_search = ""
-    for result in results["results"]:
-        url = result.get("url", "")
-        text = clean_markdown(result.get("text", ""))
+    for url, text in zip(urls, texts):
         cleaned_web_search += f"Url:{url}\nText:{text}\n\n"
 
-    answer = await extract_data(query, cleaned_web_search)
+    answer = await summarize(query, cleaned_web_search)
     print("Summarization of results done")
 
     return answer
