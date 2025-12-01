@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+aiohttp==3.13.2
+beautifulsoup4==4.14.2
+Crawl4AI==0.7.0
+exa-py==2.0.0
+langchain==1.0.5
+langchain-google-genai==3.0.1
+langchain-openai==1.0.2
+langgraph==1.0.2
+markdownify==1.2.0
+python-dotenv==1.2.1
+langgraph-cli[inmem]
+fastapi[standard]

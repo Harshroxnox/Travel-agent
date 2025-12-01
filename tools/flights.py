@@ -34,7 +34,6 @@ async def get_flights(
     params = {
         "engine": "google_flights",
         "flight_type": flight_type,
-        "show_cheapest_flights": "true",
         "currency": currency,
         "departure_id": departure_id,
         "arrival_id": arrival_id,

@@ -1,7 +1,7 @@
 
 def itinerary_prompt(user_msg, user_location, current_date, combined_results, flight_data, hotel_data):
     return f"""
-    You are an AI travel-planning assistant.  
+    You are an AI travel-planning assistant.
 
     User's request:
     {user_msg}
@@ -18,11 +18,8 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
     Hotel Options:
     {hotel_data}
 
-    If the user doesn't specify the exact details then assume good defaults like 1 month into future 5-7 day trip.
-    Try to be descriptive and informative providing useful details relating to user's query or travel.
-    
-    OUTPUT FORMAT (IMPORTANT)
-    You MUST output ONLY ONE RAW JSON object.
+    You MUST plan an itinerary with the given data and your own knowledge and output 
+    ONLY ONE RAW JSON object in the format given below.
 
     {{
         "trip_info": {{
@@ -74,9 +71,15 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
         ]
     }}
 
-    Here currency will be according to origin/user's location and 
+    Things to keep in mind:
+    - Here currency will be according to origin/user's location and 
     price will be according to chosen currency
-    Date format YYYY-MM-DD.
-    Other sections is general and can include descriptive content related to 
+    - Date format YYYY-MM-DD.
+    - Other sections is general and can include descriptive content related to 
     the trip that could be useful to the end user.
+    - If the user doesn't specify the exact details then assume good defaults like 1 month into future 5-7 day trip.
+    - Try to be descriptive and informative providing useful details relating to user's query or travel.
+
+    NOTE:
+    If you output more than one JSON, the system will break.
     """

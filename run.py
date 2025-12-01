@@ -11,4 +11,4 @@ async def agent_stream(user_input):
             print(message_chunk.content, end="")
     print("\n")
 
-asyncio.run(agent_stream("Plan a 5 day trip to Bali"))
+asyncio.run(agent_stream("what is current weather in delhi"))

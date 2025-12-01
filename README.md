@@ -7,7 +7,9 @@ Clone the repo
 git clone https://github.com/Harshroxnox/Travel-agent.git
 ```
 
-Set environment variables. Create virtual environment
+Set environment variables from `sample.env`.<br> 
+Just google for Ex:`How to get LANGSMITH_API_KEY`<br> 
+Create virtual environment
 ```bash
 python3 -m venv venv
 ```
@@ -19,15 +21,41 @@ Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
+If this fails for some reason then use the minified requirements
+```bash
+pip install -r min_requirements.txt
+```
 
-Run 
-UI based
+Setup playwright/crawler(Crawl4AI)
+```bash
+crawl4ai-setup
+```
+
+Run the backend
+```bash
+fastapi dev app.py
+```
+
+Run the frontend
+```bash
+cd ui && npm install
+```
+```bash
+npm run dev
+```
+Now you can use the chatbot at the given localhost link. <br>
+Most likely: http://localhost:5173
+
+# Other Things
+## Langraph backend and studio startup for exploring chatbot
 ```bash
 langgraph dev --allow-blocking
 ```
-OR Terminal based. Specify the input inside agent_stream function
+
+## Terminal based invoke 
+Specify the input inside agent_stream function checkout `run.py`
 ```bash
-python3 app.py
+python3 run.py
 ```
 
 # Point of failures

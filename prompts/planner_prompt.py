@@ -9,7 +9,7 @@ def planner_prompt(user_msg, user_location, current_date):
 
     TASK
     You must generate EVERYTHING needed for my pipeline.
-    If the user doesn't specify the exact details then assume good defaults:
+    If the user doesn't specify the exact details then assume good defaults like 1 month into future 5-7 day trip:
 
     1. **Three web search queries**
     - Related to travel itinerary planning
