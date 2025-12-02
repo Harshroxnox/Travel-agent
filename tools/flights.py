@@ -52,8 +52,8 @@ async def get_flights(
                 return f"API request failed with status {resp.status}"
 
 
-            # Extract top 4 flights (default behavior)
-            flights = data.get("best_flights", [])[:5]
+            # Extract top 3 flights (default behavior)
+            flights = data.get("best_flights", [])[:3]
 
             results =  {
                 "query": params,

@@ -101,6 +101,10 @@ async def itinerary_node(state):
 
     final_reply = await final_llm.ainvoke(trip_prompt)
     print("Final LLM Usage:", final_reply.usage_metadata)
+    # print("Flights Data: ")
+    # print(json.dumps(flight_data, indent=2))
+    # print("Hotels Data: ")
+    # print(json.dumps(hotel_data, indent=2))
 
     try:
         ans = json.loads(strip_code_fences(final_reply.content))
