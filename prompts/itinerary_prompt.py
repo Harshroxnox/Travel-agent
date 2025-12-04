@@ -32,6 +32,22 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
             "total_days": number
         }},
 
+        "selected": {{
+            "hotels": [
+                {{
+                    "days": 0,
+                    "index": 0
+                }},
+                ...
+            ],
+            "flights": [ 
+                {{
+                    "index": 0
+                }},
+                ...
+            ]
+        }},
+
         "itinerary": [
             {{
                 "day": 1,
@@ -72,6 +88,7 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
     }}
 
     Things to keep in mind:
+    - If multiple in selected hotels then give in order from starting day to ending day
     - Here currency will be according to origin/user's location and 
     price will be according to chosen currency
     - Date format YYYY-MM-DD.

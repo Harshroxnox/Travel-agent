@@ -27,8 +27,17 @@ const ItineraryApp = () => {
 			</div>
 		);
 	}
-	const { itinerary, hotels, price_estimation, flights, other_sections } = data;
+	const { itinerary, hotels, selected, price_estimation, flights, other_sections } = data;
 	console.log(flights);
+	console.log(hotels);
+
+	const selectedHotelIndexes = new Set(
+		selected.hotels.map(h => h.index)
+	);
+
+	const selectedFlightIndexes = new Set(
+		selected.flights.map(f => f.index)
+	);
 
 	return (
 		<div className="p-6 max-w-5xl mx-auto space-y-10">
@@ -83,13 +92,90 @@ const ItineraryApp = () => {
 			{/* Section 3: Hotels */}
 			<section>
 				<h1 className="text-3xl font-bold mb-4">Hotels</h1>
+
 				{hotels.map((hotel, idx) => (
-					<div key={idx} className="mb-6 p-4 border rounded-xl shadow-sm">
-						<h2 className="text-2xl font-semibold">{hotel?.name ?? "NA"}</h2>
-						<p className="text-gray-600">{hotel?.description ?? "NA"}</p>
-						<p className="font-medium mt-2">City: {hotel?.city ?? "NA"}</p>
-						<p className="font-medium">Total Price: {hotel?.total_price?.price ?? "NA"}</p>
-						<p className="mt-2 text-yellow-600">Rating: {hotel?.rating ?? "NA"} ⭐ ({hotel?.reviews ?? "NA"} reviews)</p>
+					<div
+						key={idx}
+						className="p-5 mb-8 border rounded-2xl shadow-md hover:shadow-lg transition-all"
+					>
+
+						{/* Hotel Content */}
+						<div className="pt-2 space-y-2">
+
+							{/* Name + link */}
+							<div className="flex items-center justify-between">
+								<h2 className="flex items-center gap-2 text-2xl font-semibold">
+									{/* Selected Badge */}
+									{hotel?.name ?? "NA"}
+									{selectedHotelIndexes.has(idx) && (
+										<span className="text-sm bg-green-700 text-white p-1 pl-2 pr-2 rounded-md">
+											Selected
+										</span>
+									)}
+								</h2>
+
+								{hotel?.link && (
+									<a
+										href={hotel.link}
+										target="_blank"
+										rel="noreferrer"
+									>
+										<button className="mt-2 px-4 py-1 bg-gray-800 cursor-pointer text-white rounded-md">
+											Visit Site
+										</button>
+									</a>
+								)}
+							</div>
+
+							{/* Description */}
+							<p className="text-gray-600">{hotel?.description ?? "NA"}</p>
+
+							{/* Location */}
+							<p className="font-medium">
+								📍 {hotel?.city ?? "NA"}, {hotel?.country ?? "NA"}
+							</p>
+
+							{/* Check-in / Check-out */}
+							<p className="text-sm text-gray-700">
+								Check-in: <span className="font-medium">{hotel?.check_in_time ?? "NA"}</span> |
+								Check-out: <span className="font-medium">{hotel?.check_out_time ?? "NA"}</span>
+							</p>
+
+							{/* Deal */}
+							{hotel?.deal && (
+								<p className="text-green-700 font-semibold">
+									💥 {hotel.deal} ({hotel?.deal_description})
+								</p>
+							)}
+
+							{/* Price */}
+							<p className="text-lg font-semibold mt-2">
+								Price per night (incl. tax): {hotel?.price_per_night?.price ?? "NA"}
+							</p>
+
+							{/* Hotel class */}
+							<p className="text-sm text-gray-700">🏨 {hotel?.hotel_class ?? "NA"}</p>
+
+							{/* Rating */}
+							<p className="text-yellow-950 font-medium">
+								⭐ {hotel?.rating ?? "NA"} ({hotel?.reviews ?? "NA"} reviews)
+							</p>
+
+							{/* Amenities */}
+							{hotel?.amenities?.length > 0 && (
+								<div className="mt-3 flex flex-wrap gap-2">
+									{hotel.amenities.slice(0, 10).map((a, i) => (
+										<span
+											key={i}
+											className="text-xs px-3 py-1 bg-gray-200 rounded-full"
+										>
+											{a}
+										</span>
+									))}
+								</div>
+							)}
+						</div>
+
 					</div>
 				))}
 			</section>
@@ -99,7 +185,7 @@ const ItineraryApp = () => {
 
 				<h1 className="text-3xl font-bold mb-4">Flights</h1>
 
-				{flights.top_flights.map((item, idx) => {
+				{flights.map((item, idx) => {
 					const first = item.flights[0];
 					const last = item.flights[item.flights.length - 1];
 
@@ -132,7 +218,7 @@ const ItineraryApp = () => {
 										{price_estimation.currency} {item.price ?? "NA"}
 									</p>
 									<button className="mt-2 px-4 py-1 bg-gray-800 text-white rounded-md">
-										VIEW PRICES
+										View Prices
 									</button>
 								</div>
 							</div>
@@ -179,12 +265,22 @@ const ItineraryApp = () => {
 							</div>
 
 							{/* Refundability */}
-							<p
-								className={`mt-2 font-semibold ${item.refundable ? "text-green-700" : "text-red-700"
-									}`}
-							>
-								{item.refundable ? "Partially Refundable" : "Non Refundable"}
-							</p>
+							<div className="flex items-center gap-2">
+								<p
+									className={`mt-2 font-semibold ${item.refundable ? "text-green-700" : "text-red-700"
+										}`}
+								>
+									{item.refundable ? "Partially Refundable" : "Non Refundable"}
+								</p>
+
+								{selectedHotelIndexes.has(idx) && (
+									<span className="text-sm mt-2 p-1 pl-2 pr-2 bg-green-700 text-white rounded-md">
+										Selected
+									</span>
+								)}
+								
+							</div>
+
 						</div>
 					);
 				})}

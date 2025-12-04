@@ -37,6 +37,7 @@ async def get_flights(
         "currency": currency,
         "departure_id": departure_id,
         "arrival_id": arrival_id,
+        "show_cheapest_flights": "true",
         "outbound_date": outbound_date,
         "api_key": os.getenv("SEARCHAPI_KEY")
     }
@@ -55,10 +56,5 @@ async def get_flights(
             # Extract top 3 flights (default behavior)
             flights = data.get("best_flights", [])[:3]
 
-            results =  {
-                "query": params,
-                "total_flights_found": len(data.get("best_flights", [])),
-                "top_flights": flights,
-            }
             print(params)
-            return results
+            return flights

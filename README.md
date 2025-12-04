@@ -59,5 +59,6 @@ python3 run.py
 ```
 
 # Point of failures
+- Plan a 5 day trip from Ludhiana to Washington DC
 - What is my current place, date and time?
 - What was my previous message?
