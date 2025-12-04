@@ -1,0 +1,207 @@
+{{
+    "trip_info": {{
+        "title": "",
+        "description": "",
+        "origin": "",
+        "destination": "",
+        "start_date": "YYYY-MM-DD",
+        "end_date": "YYYY-MM-DD",
+        "total_days": number
+    }},
+
+    "selected": {{
+        "hotels": [
+            {{
+                "days": 0,
+                "index": 0
+            }},
+            ...
+        ],
+        "flights": [ 
+            {{
+                "index": 0
+            }},
+            ...
+        ]
+    }},
+
+    "itinerary": [
+        {{
+            "day": 1,
+            "date": "",
+            "title": "",
+            "activities": [
+                {{
+                    "start_time": "",
+                    "end_time": "",
+                    "title": "",
+                    "price": number,
+                    "markdown_text": "markdown content",
+                    "type": "flight" | "hotel" | "food" | "activity"
+                }},
+                ...
+            ]
+        }},
+        ...
+    ],
+
+    "price_estimation": {{
+        "currency": "",
+        "approx_total_cost": 0,
+        "breakdown": {{
+            "flights": 0,
+            "hotels": 0,
+            "food": 0,
+            "activities": 0
+        }}
+    }},
+
+    "other_sections": [
+        {{
+            "title": "",
+            "markdown_text": "Your markdown content here..."
+        }},
+        ...
+    ]
+
+    "hotels": [
+        {
+            "type": "hotel",
+            "property_token": "ChkIgNHl66rSvIMMGg0vZy8xMWZmdjZsNGdrEAE",
+            "data_id": "0x79540ef8fb534149:0xc06f292ad796880",
+            "name": "‘Alohilani Resort Waikiki Beach",
+            "link": "https://www.alohilaniresort.com/",
+            "description": "Upmarket hotel offering restaurants & bars, plus tennis courts, an outdoor pool & an aquarium.",
+            "gps_coordinates": {
+                "latitude": 21.2747071,
+                "longitude": -157.8233668
+            },
+            "city": "Hawaii",
+            "country": "US",
+            "check_in_time": "3:00 PM",
+            "check_out_time": "11:00 AM",
+            "price_per_night": {
+                "price": "$331",
+                "extracted_price": 331,
+                "price_before_taxes": "$225",
+                "extracted_price_before_taxes": 225
+            },
+            "total_price": {
+                "price": "$1,986",
+                "extracted_price": 1986,
+                "price_before_taxes": "$1,349",
+                "extracted_price_before_taxes": 1349
+            },
+            "nearby_places": [
+                {
+                    "name": "Moana Surfrider, A Westin Resort & Spa, Waikiki Beach",
+                    "transportations": [
+                        {
+                            "type": "Walking",
+                            "duration": "6 min"
+                        }
+                    ]
+                },
+                ...
+            ],
+            "hotel_class": "5-star hotel",
+            "extracted_hotel_class": 5,
+            "rating": 4.1,
+            "reviews": 6440,
+            "reviews_histogram": {
+                "1": 479,
+                "2": 301,
+                "3": 578,
+                "4": 1543,
+                "5": 3539
+            },
+            "location_rating": 4.6,
+            "proximity_to_things_to_do_rating": 4.4,
+            "proximity_to_transit_rating": 4.9,
+            "airport_access_rating": 4.2,
+            "reviews_breakdown": [
+                {
+                    "name": "Fitness",
+                    "description": "Fitness",
+                    "total": 955,
+                    "positive": 598,
+                    "neutral": 111,
+                    "negative": 246
+                },
+                ...
+            ],
+            "amenities": [
+                "Free Wi‑Fi",
+                "Parking ($)",
+                "Outdoor pool",
+                ...
+            ],
+            "images": [
+                {
+                    "thumbnail": "https://lh5.googleusercontent.com/p/AF1QipN33BldQ4KYAZzk2MmlnFqLD3I9deLWkfrm4g8G=s287-w287-h192-n-k-no-v1",
+                    "original": "https://lh5.googleusercontent.com/p/AF1QipN33BldQ4KYAZzk2MmlnFqLD3I9deLWkfrm4g8G=s10000"
+                },
+                ...
+            ]
+        }
+    ]
+
+    "flights": [
+        {
+            "flights": [
+                {
+                    "departure_airport": {
+                        "name": "John F. Kennedy International Airport",
+                        "id": "JFK",
+                        "date": "2024-11-19",
+                        "time": "17:00"
+                    },
+                    "arrival_airport": {
+                        "name": "Adolfo Suárez Madrid–Barajas Airport",
+                        "id": "MAD",
+                        "date": "2024-11-20",
+                        "time": "06:05"
+                    },
+                    "duration": 425,
+                    "airplane": "Airbus A330",
+                    "airline": "Iberia",
+                    "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/IB.png",
+                    "travel_class": "Economy",
+                    "flight_number": "IB 212",
+                    "ticket_also_sold_by": ["American", "Finnair", "British Airways"],
+                    "is_overnight": true,
+                    "extensions": [
+                        "Power and USB outlets",
+                        "On-demand video",
+                        "Wi-Fi for fee",
+                        "Seat type Average Legroom",
+                        "Legroom 31 inches",
+                        "Carbon emission: 440 kg"
+                    ],
+                    "detected_extensions": {
+                        "has_power_and_usb_outlets": true,
+                        "has_on_demand_video": true,
+                        "wifi": "for fee",
+                        "seat_type": "Average Legroom",
+                        "legroom_short": "31 in",
+                        "legroom_long": "31 inches",
+                        "carbon_emission": 440
+                    }
+                }
+            ],
+            "total_duration": 425,
+            "carbon_emissions": {
+                "this_flight": 440000,
+                "typical_for_this_route": 487000,
+                "difference_percent": -10,
+                "lowest_route": 509000
+            },
+            "price": 490,
+            "type": "Round trip",
+            "extensions": ["Bag and fare conditions depend on the return flight"],
+            "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/IB.png",
+            "departure_token": "WyJDalJJWVRGYVNVSkVSemsyWldOQlRVMVNVR2RDUnkwdExTMHRMUzB0TFc5NVpHMHhOMEZCUVVGQlIyTTNVa2h2VEhORFVrbEJFZ1ZKUWpJeE1ob0xDSzMrQWhBQ0dnTlZVMFE0SEhDdC9nST0iLFtbIkpGSyIsIjIwMjQtMTEtMTkiLCJNQUQiLCJudWxsIiwiSUIiLCIyMTIiXV1d"
+        },
+        ...
+    ]
+}}

@@ -59,7 +59,8 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
                         "end_time": "",
                         "title": "",
                         "price": number,
-                        "markdown_text": "markdown content"
+                        "markdown_text": "markdown content",
+                        "type": "flight" | "hotel" | "food" | "activity"
                     }},
                     ...
                 ]
@@ -88,7 +89,11 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
     }}
 
     Things to keep in mind:
+    - Be practical about how much can be done within a day.
+    - Assume approximate prices of restaurants/food according to place.
+    - Type of activity can be one of these "flight" or "hotel" or "food" or "activity"
     - If multiple in selected hotels then give in order from starting day to ending day
+    - Include the total price of a particular hotel/flight the first time it appears in itinerary 
     - Here currency will be according to origin/user's location and 
     price will be according to chosen currency
     - Date format YYYY-MM-DD.

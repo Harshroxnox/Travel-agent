@@ -39,6 +39,85 @@ const ItineraryApp = () => {
 		selected.flights.map(f => f.index)
 	);
 
+	const formatPrice = (amount) => {
+		// Ensure price_estimation.currency is available
+		const currency = price_estimation.currency || '$';
+		const price = (typeof amount === 'number') ? amount : 0;
+		return `${currency} ${price.toLocaleString()}`;
+	};
+
+	// NOTE: This detailedHotels and detailedFlights can be reduced and needs to be optimized
+	// but for now this is fine
+	// --------------------------------------------------------------------
+	// --- STEP 1: CALCULATE & GATHER HOTELS DATA ---
+	// --------------------------------------------------------------------
+	let totalHotelsCost = 0;
+	const detailedHotels = selected.hotels.map(sel => {
+		const hotel = hotels[sel.index];
+		// Safely extract price, default to 0 if not found [cite: 11]
+		const pricePerNight = hotel.price_per_night?.extracted_price || 0;
+		const totalCost = sel.days * pricePerNight;
+		totalHotelsCost += totalCost; // Sum the total cost
+
+		return {
+			name: hotel.name,
+			days: sel.days,
+			price_per_night: pricePerNight,
+			total_cost: totalCost
+		};
+	});
+
+	// --------------------------------------------------------------------
+	// --- STEP 2: CALCULATE & GATHER FLIGHTS DATA ---
+	// --------------------------------------------------------------------
+	let totalFlightsCost = 0;
+	const detailedFlights = selected.flights.map(sel => {
+		const flightOption = flights[sel.index];
+		const price = flightOption.price || 0; // Total price for this option [cite: 31]
+		totalFlightsCost += price; // Sum the total cost
+
+		// Extract detailed info for display
+		const primarySegment = flightOption.flights[0];
+
+		return {
+			airline: primarySegment.airline,
+			flight_number: primarySegment.flight_number,
+			route: `${primarySegment.departure_airport.id} → ${primarySegment.arrival_airport.id}`,
+			type: flightOption.type,
+			price: price
+		};
+	});
+
+	// --------------------------------------------------------------------
+	// --- STEP 3: CALCULATE FOOD & ACTIVITIES FROM ITINERARY ---
+	// --------------------------------------------------------------------
+	let totalFoodCost = 0;
+	let totalActivitiesCost = 0;
+
+	itinerary.forEach(day => {
+		day.activities.forEach(activity => {
+			const price = activity.price || 0; // Get the price for the activity [cite: 5]
+			const type = activity.type; // Get the type [cite: 6]
+
+			if (type === 'food') {
+				totalFoodCost += price;
+			} else if (type === 'activity') {
+				totalActivitiesCost += price;
+			}
+			// Note: 'flight' and 'hotel' types are handled in steps 1 and 2
+		});
+	});
+
+	// --------------------------------------------------------------------
+	// --- STEP 4: CALCULATE OVERALL TOTAL COST ---
+	// --------------------------------------------------------------------
+	const calculatedApproxTotalCost =
+		totalHotelsCost +
+		totalFlightsCost +
+		totalFoodCost +
+		totalActivitiesCost;
+
+
 	return (
 		<div className="p-6 max-w-5xl mx-auto space-y-10">
 			{/* Section 1: Itinerary */}
@@ -75,17 +154,81 @@ const ItineraryApp = () => {
 			{/* Section 2: Price Estimation */}
 			<section>
 				<h1 className="text-3xl font-bold mb-4">Price Estimation</h1>
-				<div className="mb-6 p-4 border rounded-xl shadow-sm">
-					<p className="text-xl font-semibold">Total Estimated Cost: {price_estimation.currency} {price_estimation.approx_total_cost}</p>
-					<div className="mt-4">
-						<p className="font-medium">Breakdown:</p>
-						<ul className="list-disc ml-6 mt-2">
-							<li>Flights: {price_estimation.breakdown.flights}</li>
-							<li>Hotels: {price_estimation.breakdown.hotels}</li>
-							<li>Food: {price_estimation.breakdown.food}</li>
-							<li>Activities: {price_estimation.breakdown.activities}</li>
+				<div className="p-5 mb-8 border rounded-2xl shadow-md hover:shadow-lg transition-all">
+
+					{/* --- TOTAL ESTIMATED COST --- */}
+					<p className="text-2xl font-extrabold text-blue-900 mb-6">
+						Total Calculated Cost: {formatPrice(calculatedApproxTotalCost)}
+					</p>
+
+					{/* --- DETAILED BREAKDOWN --- */}
+					<p className="font-semibold text-xl mb-3 border-b pb-2">Detailed Breakdown</p>
+
+					{/* -------------------- FLIGHTS DETAIL -------------------- */}
+					<div className="mb-4">
+						<h2 className="text-lg font-bold text-blue-700 mb-2">
+							✈️ Flights Total: {formatPrice(totalFlightsCost)}
+						</h2>
+						<ul className="space-y-3 pl-4">
+							{detailedFlights.map((flight, index) => (
+								<li key={index} className="p-3 bg-blue-50 rounded-lg shadow-sm">
+									<p className="font-medium">
+										{flight.airline} ({flight.flight_number})
+									</p>
+									<p className="text-sm text-gray-600 ml-1">
+										<span className="font-semibold">Route:</span> {flight.route} |
+										<span className="font-semibold ml-2">Type:</span> {flight.type}
+									</p>
+									<p className="text-right font-bold text-lg text-blue-800">
+										Price: {formatPrice(flight.price)}
+									</p>
+								</li>
+							))}
 						</ul>
 					</div>
+
+					{/* -------------------- HOTELS DETAIL -------------------- */}
+					<div className="mb-3">
+						<h2 className="text-lg font-bold text-green-700 mb-2">
+							🏨 Hotels Total: {formatPrice(totalHotelsCost)}
+						</h2>
+						<ul className="space-y-3 pl-4">
+							{detailedHotels.map((hotel, index) => (
+								<li key={index} className="p-3 bg-green-50 rounded-lg shadow-sm">
+									<p className="font-medium text-green-800">
+										{hotel.name}
+									</p>
+									<p className="text-sm text-gray-600 ml-1">
+										<span className="font-semibold">{hotel.days} days</span>
+										× {formatPrice(hotel.price_per_night)} per night
+									</p>
+									<p className="text-right font-bold text-lg text-green-800">
+										Total: {formatPrice(hotel.total_cost)}
+									</p>
+								</li>
+							))}
+						</ul>
+					</div>
+
+					{/* -------------------- OTHER BREAKDOWN ITEMS -------------------- */}
+					<div className="mt-3 pt-2 border-t">
+						<h2 className="text-lg font-bold mb-1">💸 Estimated Daily Costs</h2>
+						<ul className="space-y-1">
+							<li className="flex justify-between p-1">
+								<span className="font-medium text-gray-700">🍔 Food Total:</span>
+								<span className="text-gray-900 font-semibold">
+									{formatPrice(totalFoodCost)}
+								</span>
+							</li>
+							<li className="flex justify-between p-1">
+								<span className="font-medium text-gray-700">🎟️ Activities Total:</span>
+								<span className="text-gray-900 font-semibold">
+									{formatPrice(totalActivitiesCost)}
+								</span>
+							</li>
+						</ul>
+					</div>
+
 				</div>
 			</section>
 
@@ -100,7 +243,7 @@ const ItineraryApp = () => {
 					>
 
 						{/* Hotel Content */}
-						<div className="pt-2 space-y-2">
+						<div className="space-y-2">
 
 							{/* Name + link */}
 							<div className="flex items-center justify-between">
@@ -215,7 +358,7 @@ const ItineraryApp = () => {
 								</div>
 								<div className="ml-auto text-right">
 									<p className="text-2xl font-bold">
-										{price_estimation.currency} {item.price ?? "NA"}
+										{price_estimation.currency} {formatPrice(item.price)}
 									</p>
 									<button className="mt-2 px-4 py-1 bg-gray-800 text-white rounded-md">
 										View Prices
@@ -273,12 +416,12 @@ const ItineraryApp = () => {
 									{item.refundable ? "Partially Refundable" : "Non Refundable"}
 								</p>
 
-								{selectedHotelIndexes.has(idx) && (
+								{selectedFlightIndexes.has(idx) && (
 									<span className="text-sm mt-2 p-1 pl-2 pr-2 bg-green-700 text-white rounded-md">
 										Selected
 									</span>
 								)}
-								
+
 							</div>
 
 						</div>
