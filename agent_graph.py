@@ -1,7 +1,6 @@
 from typing import Dict, Optional
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain.messages import AIMessage
-from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tools.web_search import web_search
 from tools.hotels import get_hotels
@@ -13,7 +12,6 @@ from prompts.itinerary_prompt import itinerary_prompt
 from utils.utils import strip_code_fences, preprocess_hotels
 import json
 import asyncio
-
 from datetime import date
 
 user_location = "Delhi, India"
@@ -24,22 +22,21 @@ load_dotenv()
 
 intents = ["itinerary", "knowledge", "general", "flight", "hotel"]
 
-# llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
 
-# final_llm = ChatOpenAI(model="gpt-4o", tags=["final"])
 final_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["final"])
 
-# define state
+
+# Define State
 class AgentState(MessagesState):
     itinerary: Optional[Dict]
+
 
 # --- Node 1: Gather Intent ---
 async def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
 
     reply = await llm.ainvoke(gather_intent_prompt(user_msg))
-    print(reply.content)
     response = strip_code_fences(reply.content)
     
     try:
@@ -54,6 +51,7 @@ async def gather_intent(state):
     print(user_msg)
     print(data)
     return data
+
 
 # --- Node 2: Itinerary Node ---
 async def itinerary_node(state):
@@ -120,6 +118,7 @@ async def itinerary_node(state):
         "itinerary": ans
     }
 
+
 # --- Node 3: Knowledge Node ---
 async def knowledge_node(state):
     user_msg = state["messages"][-1].content
@@ -147,6 +146,7 @@ async def knowledge_node(state):
     print(reply.usage_metadata)
     return {"messages": [reply]}
 
+
 # --- Node 4: General Chat ---
 async def general_chat(state):
     user_msg = state["messages"][-1].content
@@ -158,7 +158,8 @@ async def general_chat(state):
     print(reply.usage_metadata)
     return {"messages": [reply]}
 
-# --- Node 4: General Chat ---
+
+# --- Node 5: Flight Node ---
 async def flight_node(state):
     user_msg = state["messages"][-1].content
 
@@ -222,7 +223,7 @@ async def flight_node(state):
     return {"messages": [reply]}
 
 
-# --- Node 4: General Chat ---
+# --- Node 6: Hotel Node ---
 async def hotel_node(state):
     user_msg = state["messages"][-1].content
 
@@ -284,7 +285,7 @@ async def hotel_node(state):
     return {"messages": [reply]}
 
 
-# --- Node 5: Fallback ---
+# --- Node 7: Fallback ---
 def fallback(state):
     return {
         "messages": [
