@@ -22,7 +22,7 @@ current_date = current_date.strftime("%d %B %Y")
 
 load_dotenv()
 
-intents = ["itinerary", "knowledge", "general"]
+intents = ["itinerary", "knowledge", "general", "flight", "hotel"]
 
 # llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", tags=["internal"])
@@ -39,6 +39,7 @@ async def gather_intent(state):
     user_msg = state["messages"][-1].content.lower()
 
     reply = await llm.ainvoke(gather_intent_prompt(user_msg))
+    print(reply.content)
     response = strip_code_fences(reply.content)
     
     try:
@@ -101,10 +102,6 @@ async def itinerary_node(state):
 
     final_reply = await final_llm.ainvoke(trip_prompt)
     print("Final LLM Usage:", final_reply.usage_metadata)
-    # print("Flights Data: ")
-    # print(json.dumps(flight_data, indent=2))
-    # print("Hotels Data: ")
-    # print(json.dumps(hotel_data, indent=2))
 
     try:
         ans = json.loads(strip_code_fences(final_reply.content))
@@ -161,6 +158,132 @@ async def general_chat(state):
     print(reply.usage_metadata)
     return {"messages": [reply]}
 
+# --- Node 4: General Chat ---
+async def flight_node(state):
+    user_msg = state["messages"][-1].content
+
+    flight_inputs_prompt = f"""
+    You need to extract flight data from the given information.
+    User Request: {user_msg}
+    User's Location: {user_location}
+    Current Date: {current_date}
+
+    Create values for the function get_flights:
+    - departure_id (str): IATA airport code of the origin (e.g., 'JFK').
+    - arrival_id (str): IATA airport code of the destination (e.g., 'MAD').
+    - currency: ISO currency code according to users location
+    - outbound_date (str): Outbound date in YYYY-MM-DD format.
+    - return_date (str): Return date in YYYY-MM-DD format (use None for one-way).
+    - flight_type (str): Type of trip — 'round_trip' or 'one_way'.
+
+    If the user doesn't specify the exact dates then assume good defaults like 1 month into future.
+
+    OUTPUT FORMAT (IMPORTANT)
+    You MUST output ONLY one raw JSON object.
+    The JSON MUST follow this exact structure:
+    {{
+        "departure_id": "string",
+        "arrival_id": "string",
+        "currency": "string",
+        "outbound_date": "YYYY-MM-DD",
+        "return_date": "YYYY-MM-DD",
+        "flight_type": "round_trip"
+    }}
+    """
+
+    flight_inputs = await llm.ainvoke(flight_inputs_prompt)
+    try:
+        flight_inputs = json.loads(strip_code_fences(flight_inputs.content))
+    except:
+        return {"messages": [
+            AIMessage(content="I could not understand the travel details. Please rephrase your request.")
+        ]}
+
+    flight_data = await get_flights(**flight_inputs)
+
+    final_prompt = f"""
+    You are an AI assistant specializing in travel and general queries.
+    Use the data below to answer the user's question.
+
+    Web search results:
+    {flight_data}
+
+    User question:
+    {user_msg}
+
+    - If the web information seems irrelevant or insufficient, combine it with your own knowledge.
+    - Try to be descriptive and informative providing useful details relating to user's query or travel.
+    - Try to answer in bullet points in a presentable format
+    """
+
+    reply = await final_llm.ainvoke(final_prompt)
+
+    print(reply.usage_metadata)
+    return {"messages": [reply]}
+
+
+# --- Node 4: General Chat ---
+async def hotel_node(state):
+    user_msg = state["messages"][-1].content
+
+    hotel_inputs_prompt = f"""
+    You need to extract hotel data from the given information.
+    User Request: {user_msg}
+    User's Location: {user_location}
+    Current Date: {current_date}
+
+    Create values for the function get_hotels:
+    - query: Search query text. Example: "Hotels in Manhattan New York"
+    - currency: ISO currency code according to users location
+    - check_in_date: Date in YYYY-MM-DD format
+    - check_out_date: Date in YYYY-MM-DD format
+
+    If the user doesn't specify the exact dates then assume good defaults like 1 month into future.
+
+    OUTPUT FORMAT (IMPORTANT)
+    You MUST output ONLY one raw JSON object.
+    The JSON MUST follow this exact structure:
+    {{
+        "query": "string",
+        "currency": "string",
+        "check_in_date": "YYYY-MM-DD",
+        "check_out_date": "YYYY-MM-DD"
+    }}
+    """
+
+    hotel_inputs = await llm.ainvoke(hotel_inputs_prompt)
+    try:
+        hotel_inputs = json.loads(strip_code_fences(hotel_inputs.content))
+    except:
+        return {"messages": [
+            AIMessage(content="I could not understand the travel details. Please rephrase your request.")
+        ]}
+
+    # NOTE: We have to see this whether to give hotel_data or llm_hotel_data
+    hotel_data = await get_hotels(**hotel_inputs)
+    llm_hotel_data = preprocess_hotels(hotel_data)
+
+    final_prompt = f"""
+    You are an AI assistant specializing in travel and general queries.
+    Use the data below to answer the user's question.
+
+    Data:
+    {llm_hotel_data}
+
+    User question:
+    {user_msg}
+
+    - If the web information seems irrelevant or insufficient, combine it with your own knowledge.
+    - Try to be descriptive and informative providing useful details relating to user's query or travel.
+    - Try to answer in bullet points in a presentable format
+    """
+
+    reply = await final_llm.ainvoke(final_prompt)
+
+    print(reply.usage_metadata)
+    return {"messages": [reply]}
+
+
 # --- Node 5: Fallback ---
 def fallback(state):
     return {
@@ -175,6 +298,8 @@ graph = StateGraph(AgentState)
 graph.add_node("gather_intent", gather_intent)
 graph.add_node("itinerary", itinerary_node)
 graph.add_node("knowledge", knowledge_node)
+graph.add_node("hotel", hotel_node)
+graph.add_node("flight", flight_node)
 graph.add_node("general", general_chat)
 graph.add_node("fallback", fallback)
 
@@ -186,6 +311,10 @@ def route_after_intent(state):
         return "itinerary"
     elif intent == "knowledge":
         return "knowledge"
+    elif intent == "hotel":
+        return "hotel"
+    elif intent == "flight":
+        return "flight"
     elif intent == "general":
         return "general"
     else:
@@ -194,6 +323,8 @@ def route_after_intent(state):
 graph.add_conditional_edges("gather_intent", route_after_intent)
 graph.add_edge("itinerary", END)
 graph.add_edge("knowledge", END)
+graph.add_edge("hotel", END)
+graph.add_edge("flight", END)
 graph.add_edge("general", END)
 graph.add_edge("fallback", END)
 

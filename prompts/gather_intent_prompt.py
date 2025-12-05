@@ -12,11 +12,19 @@ def gather_intent_prompt(user_prompt):
     2. **Knowledge** — The user is asking questions that require web search.
     Example: "Suggest me hotels near Delhi, Best places to travel, Show me flights, Current news, weather etc."
 
-    3. **General** — Any user query that you can answer and does not require live web search 
+    3. **Flight search** — The user wants flight details between two locations.
+    Example: "Show me flights from Delhi to Dubai", "Flights from Mumbai to London tomorrow".
+
+    4. **Hotel search** — The user wants hotels in a specific location.
+    Example: "Suggest me hotels in Goa", "Show hotels near Jaipur airport".
+
+    5. **General** — Any user query that you can answer and does not require live web search 
 
     IMP Notes:
     - Itinerary planning goes to itinerary but itinerary suggestions/comparisons goes to knowledge.
-    - Suggest me flights/hotels/trains/cabs/any other goes to knowledge. 
+    - Show me flights from X to Y goes to flight
+    - Show me hotels in X goes to hotel
+    - Suggest me trains/cabs/any other goes to knowledge. 
     - Only return itinerary when the user does not need any recommendations, suggestions, comparisons etc and expects
     the generated itinerary in the next response
 
@@ -25,6 +33,6 @@ def gather_intent_prompt(user_prompt):
     ### Output format:
     You must reply **only** with a valid JSON string. Don't give markdown JSON just string.
     {{
-        "intent": "itinerary" | "knowledge" | "general" | null
+        "intent": "itinerary" | "knowledge" | "general" | "hotel" | "flight" | null
     }}
     """
