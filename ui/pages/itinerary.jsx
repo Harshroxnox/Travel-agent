@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useContext } from 'react'
@@ -6,8 +6,15 @@ import { useNavigate } from "react-router";
 import { AppContext } from "../context/AppContext";
 
 const ItineraryApp = () => {
+	const [bookingOptions, setBookingOptions] = useState({});
+	const [loadingHotelIdx, setLoadingHotelIdx] = useState(null);
+
+	const [flightBookingOptions, setFlightBookingOptions] = useState({});
+	const [loadingFlightIdx, setLoadingFlightIdx] = useState(null);
+
 	const { data } = useContext(AppContext);
 	const navigate = useNavigate();
+	const baseUrl = import.meta.env.VITE_BASE_URL;
 
 	if (!data || Object.keys(data).length === 0) {
 		return (
@@ -27,9 +34,89 @@ const ItineraryApp = () => {
 			</div>
 		);
 	}
-	const { itinerary, hotels, selected, misc_expenses, currency, flights, other_sections } = data;
-	console.log(flights);
-	console.log(hotels);
+	const { trip_info, itinerary, hotels, selected, misc_expenses, flight_params, currency, flights, other_sections } = data;
+
+
+	const handleFlightBooking = async (flightItem, idx) => {
+		try {
+			setLoadingFlightIdx(idx);
+
+			const payload = {
+				engine: flight_params.engine,
+				flight_type: flight_params.flight_type,
+				currency: flight_params.currency,
+				departure_id: flight_params.departure_id,
+				arrival_id: flight_params.arrival_id,
+				show_cheapest_flights: flight_params.show_cheapest_flights,
+				outbound_date: flight_params.outbound_date,
+				return_date: flight_params.return_date,
+				departure_token: flightItem.departure_token // from selected flight
+			};
+
+			const res = await fetch(`${baseUrl}/api/flights_booking`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload)
+			});
+
+			const result = await res.json(); // { booking_options: [...] }
+
+			setFlightBookingOptions(prev => ({
+				...prev,
+				[idx]: result.booking_options || []
+			}));
+
+		} catch (err) {
+			console.error("Flight booking error:", err);
+			alert("Failed to fetch flight booking options");
+		} finally {
+			setLoadingFlightIdx(null);
+		}
+	};
+
+
+	const handleHotelBooking = async (hotel, idx) => {
+		try {
+			setLoadingHotelIdx(idx);
+
+			let checkInDate = trip_info.start_date;
+			let checkOutDate = trip_info.end_date;
+
+			// Use selected hotel dates if selected
+			const selectedHotel = selected.hotels.find(h => h.index === idx);
+			if (selectedHotel) {
+				checkInDate = selectedHotel.check_in_date;
+				checkOutDate = selectedHotel.check_out_date;
+			}
+
+			const payload = {
+				engine: "google_hotels_property",
+				property_token: hotel.property_token,
+				check_in_date: checkInDate,
+				check_out_date: checkOutDate,
+				currency: currency || "USD"
+			};
+
+			const res = await fetch(`${baseUrl}/api/hotels_booking`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload)
+			});
+
+			const result = await res.json(); 
+
+			setBookingOptions(prev => ({
+				...prev,
+				[idx]: result
+			}));
+
+		} catch (err) {
+			console.error("Booking fetch error:", err);
+			alert("Failed to fetch booking options");
+		} finally {
+			setLoadingHotelIdx(null);
+		}
+	};
 
 	const selectedHotelIndexes = new Set(
 		selected.hotels.map(h => h.index)
@@ -47,13 +134,11 @@ const ItineraryApp = () => {
 
 	// NOTE: This detailedHotels and detailedFlights can be reduced and needs to be optimized
 	// but for now this is fine
-	// --------------------------------------------------------------------
-	// --- STEP 1: CALCULATE & GATHER HOTELS DATA ---
-	// --------------------------------------------------------------------
+	// Calculate and gather hotels data
 	let totalHotelsCost = 0;
 	const detailedHotels = selected.hotels.map(sel => {
 		const hotel = hotels[sel.index];
-		// Safely extract price, default to 0 if not found [cite: 11]
+		// Safely extract price, default to 0 if not found
 		const pricePerNight = hotel.price_per_night?.extracted_price || 0;
 		const totalCost = sel.days * pricePerNight;
 		totalHotelsCost += totalCost; // Sum the total cost
@@ -66,13 +151,11 @@ const ItineraryApp = () => {
 		};
 	});
 
-	// --------------------------------------------------------------------
-	// --- STEP 2: CALCULATE & GATHER FLIGHTS DATA ---
-	// --------------------------------------------------------------------
+	// Calculate and gather flights data
 	let totalFlightsCost = 0;
 	const detailedFlights = selected.flights.map(sel => {
 		const flightOption = flights[sel.index];
-		const price = flightOption.price || 0; // Total price for this option [cite: 31]
+		const price = flightOption.price || 0; // Total price for this option
 		totalFlightsCost += price; // Sum the total cost
 
 		// Extract detailed info for display
@@ -87,16 +170,14 @@ const ItineraryApp = () => {
 		};
 	});
 
-	// --------------------------------------------------------------------
-	// --- STEP 3: CALCULATE FOOD & ACTIVITIES FROM ITINERARY ---
-	// --------------------------------------------------------------------
+	// Calculate food and activities from itinerary
 	let totalFoodCost = 0;
 	let totalActivitiesCost = 0;
 
 	itinerary.forEach(day => {
 		day.activities.forEach(activity => {
-			const price = activity.price || 0; // Get the price for the activity [cite: 5]
-			const type = activity.type; // Get the type [cite: 6]
+			const price = activity.price || 0; // Get the price for the activity
+			const type = activity.type; // Get the type
 
 			if (type === 'food') {
 				totalFoodCost += price;
@@ -107,26 +188,33 @@ const ItineraryApp = () => {
 		});
 	});
 
-    // Calculate Misc Expenses
-    let miscPrices = 0;
-    misc_expenses.forEach(expense => {
-        miscPrices = miscPrices + expense.price;
-    })
+	// Calculate Misc Expenses
+	let miscPrices = 0;
+	misc_expenses.forEach(expense => {
+		miscPrices = miscPrices + expense.price;
+	})
 
-	// --------------------------------------------------------------------
-	// --- STEP 4: CALCULATE OVERALL TOTAL COST ---
-	// --------------------------------------------------------------------
+	// Calculate Overall Total Cost
 	const calculatedApproxTotalCost =
 		totalHotelsCost +
 		totalFlightsCost +
 		totalFoodCost +
 		totalActivitiesCost +
-        miscPrices;
+		miscPrices;
 
 
 	return (
 		<div className="p-6 max-w-5xl mx-auto space-y-10">
-			{/* Section 1: Itinerary */}
+{/* 
+					This Itinerary rendering page is divided into 5 sections namely 
+					1. Itinerary
+					2. Price Estimation
+					3. Hotels
+					4. Flights
+					5. Additional Sections
+*/}
+			
+{/* ------------------------------------------------------Itinerary------------------------------------------------------ */}
 			<section>
 				<div className="flex items-center justify-between">
 					<h1 className="text-3xl font-bold mb-4">Itinerary</h1>
@@ -157,20 +245,21 @@ const ItineraryApp = () => {
 				))}
 			</section>
 
-			{/* Section 2: Price Estimation */}
+
+{/* ------------------------------------------------------Price-Estimation------------------------------------------------------ */}
 			<section>
 				<h1 className="text-3xl font-bold mb-4">Price Estimation</h1>
 				<div className="p-5 mb-8 border rounded-2xl shadow-md hover:shadow-lg transition-all">
 
-					{/* --- TOTAL ESTIMATED COST --- */}
+					{/* Total Estimated Cost */}
 					<p className="text-2xl font-extrabold text-blue-900 mb-6">
 						Total Calculated Cost: {formatPrice(calculatedApproxTotalCost)}
 					</p>
 
-					{/* --- DETAILED BREAKDOWN --- */}
+					{/* Detailed Breakdown */}
 					<p className="font-semibold text-xl mb-3 border-b pb-2">Detailed Breakdown for 1 Person</p>
 
-					{/* -------------------- FLIGHTS DETAIL -------------------- */}
+					{/* Flights Detail */}
 					<div className="mb-4">
 						<h2 className="text-lg font-bold text-blue-700 mb-2">
 							✈️ Flights Total: {formatPrice(totalFlightsCost)}
@@ -193,7 +282,7 @@ const ItineraryApp = () => {
 						</ul>
 					</div>
 
-					{/* -------------------- HOTELS DETAIL -------------------- */}
+					{/* Hotels Detail */}
 					<div className="mb-3">
 						<h2 className="text-lg font-bold text-green-700 mb-2">
 							🏨 Hotels Total: {formatPrice(totalHotelsCost)}
@@ -216,7 +305,7 @@ const ItineraryApp = () => {
 						</ul>
 					</div>
 
-					{/* -------------------- OTHER BREAKDOWN ITEMS -------------------- */}
+					{/* Other Breakdown Items */}
 					<div className="mt-3 pt-2 border-t">
 						<h2 className="text-lg font-bold mb-1">💸 Estimated Costs</h2>
 						<ul className="space-y-1">
@@ -235,25 +324,26 @@ const ItineraryApp = () => {
 						</ul>
 					</div>
 
-                    {/* -------------------- Miscellaneous Expenses -------------------- */}
+					{/* Miscellaneous Expenses */}
 					<div className="mt-3 pt-2 border-t">
 						<h2 className="text-lg font-bold mb-1">💸 Miscellaneous Expenses</h2>
 						<ul className="space-y-1">
-                            {misc_expenses.map(expense => (
-                                <li className="flex justify-between p-1">
-                                    <span className="font-medium text-gray-700">{expense.name}</span>
-                                    <span className="text-gray-900 font-semibold">
-                                        {formatPrice(expense.price)}
-                                    </span>
-                                </li>
-                            ))}
+							{misc_expenses.map(expense => (
+								<li className="flex justify-between p-1">
+									<span className="font-medium text-gray-700">{expense.name}</span>
+									<span className="text-gray-900 font-semibold">
+										{formatPrice(expense.price)}
+									</span>
+								</li>
+							))}
 						</ul>
 					</div>
 
 				</div>
 			</section>
 
-			{/* Section 3: Hotels */}
+
+{/* ---------------------------------------------------------Hotels------------------------------------------------------ */}
 			<section>
 				<h1 className="text-3xl font-bold mb-4">Hotels</h1>
 
@@ -278,18 +368,73 @@ const ItineraryApp = () => {
 									)}
 								</h2>
 
-								{hotel?.link && (
-									<a
-										href={hotel.link}
-										target="_blank"
-										rel="noreferrer"
-									>
-										<button className="mt-2 px-4 py-1 bg-gray-800 cursor-pointer text-white rounded-md">
-											Visit Site
-										</button>
-									</a>
-								)}
+								<button
+									onClick={() => handleHotelBooking(hotel, idx)}
+									className="mt-2 px-4 py-1 bg-blue-900 cursor-pointer text-white rounded-md"
+									disabled={loadingHotelIdx === idx}
+								>
+									{loadingHotelIdx === idx ? "Fetching..." : "Book Now"}
+								</button>
 							</div>
+
+							{/* Booking Options */}
+							{bookingOptions[idx]?.length > 0 && (
+								<div className="mt-5 border-t pt-4 space-y-4">
+									<h3 className="text-lg font-bold text-blue-900">
+										Available Booking Options
+									</h3>
+
+									{bookingOptions[idx].map((provider, pIdx) => (
+										<div
+											key={pIdx}
+											className="border rounded-xl p-4 bg-blue-50 shadow-sm"
+										>
+											{/* Provider Row */}
+											<div className="flex items-center justify-between mb-2">
+												<div className="flex items-center gap-3">
+													<img
+														src={provider.logo}
+														alt={provider.source}
+														className="h-8 object-contain"
+													/>
+													<span className="font-semibold">{provider.source}</span>
+												</div>
+
+												<span className="text-sm font-bold text-green-800">
+													Total: {provider.total_price?.price}
+												</span>
+											</div>
+
+											{/* Rooms */}
+											<div className="space-y-3 mt-3">
+												{provider.rooms?.map((room, rIdx) => (
+													<div
+														key={rIdx}
+														className="flex items-center justify-between bg-white p-3 rounded-lg shadow"
+													>
+														<div>
+															<p className="font-medium">{room.name}</p>
+															<p className="text-sm text-gray-600">
+																{room.price_per_night?.price} per night
+															</p>
+															<p className="text-sm text-green-700 font-semibold">
+																Total: {room.total_price?.price}
+															</p>
+														</div>
+
+														<button
+															onClick={() => window.open(room.link, "_blank")}
+															className="px-4 py-1 bg-green-700 text-white rounded-md hover:bg-green-800"
+														>
+															Book Room
+														</button>
+													</div>
+												))}
+											</div>
+										</div>
+									))}
+								</div>
+							)}
 
 							{/* Description */}
 							<p className="text-gray-600">{hotel?.description ?? "NA"}</p>
@@ -344,9 +489,9 @@ const ItineraryApp = () => {
 				))}
 			</section>
 
-			{/* Section 4: Flights */}
-			<section>
 
+{/* ---------------------------------------------------------Flights------------------------------------------------------ */}
+			<section>
 				<h1 className="text-3xl font-bold mb-4">Flights</h1>
 
 				{flights.map((item, idx) => {
@@ -381,11 +526,104 @@ const ItineraryApp = () => {
 									<p className="text-2xl font-bold">
 										{formatPrice(item.price)}
 									</p>
-									<button className="mt-2 px-4 py-1 bg-gray-800 text-white rounded-md">
-										View Prices
+									<button
+										onClick={() => handleFlightBooking(item, idx)}
+										disabled={loadingFlightIdx === idx}
+										className="mt-2 px-4 py-1 bg-blue-800 text-white rounded-md hover:bg-blue-900"
+									>
+										{loadingFlightIdx === idx ? "Fetching..." : "Book Now"}
 									</button>
 								</div>
 							</div>
+
+							{/* Flight Booking Options */}
+							{flightBookingOptions[idx]?.length > 0 && (
+								<div className="mt-5 border-t pt-4 space-y-4">
+									<h3 className="text-lg font-bold text-blue-900">
+										Available Booking Options
+									</h3>
+
+									{flightBookingOptions[idx].map((opt, oIdx) => (
+										<div
+											key={oIdx}
+											className="border rounded-xl p-4 bg-blue-50 shadow-sm space-y-2"
+										>
+											{/* Airline + Price */}
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-2">
+													{opt.airline_logos?.map((logo, i) => (
+														<img key={i} src={logo} alt="logo" className="h-6" />
+													))}
+													<span className="font-semibold">{opt.book_with}</span>
+												</div>
+
+												<span className="font-bold text-green-800">
+													{formatPrice(opt.price)}
+												</span>
+											</div>
+
+											{/* Flight Numbers */}
+											<p className="text-sm text-gray-700">
+												{opt.flight_numbers?.join(" , ")}
+											</p>
+
+											{/* Extensions */}
+											{opt.extensions?.length > 0 && (
+												<ul className="text-xs text-gray-600 list-disc ml-4">
+													{opt.extensions.map((e, i) => (
+														<li key={i}>{e}</li>
+													))}
+												</ul>
+											)}
+
+											{/* Baggage */}
+											{opt.baggage_prices?.length > 0 && (
+												<p className="text-xs text-gray-700">
+													🎒 {opt.baggage_prices.join(" | ")}
+												</p>
+											)}
+
+											{/* Book Flight Button */}
+											{opt.booking_request && (
+												<button
+													onClick={() => {
+														const formHtml = `
+															<html>
+																<body onload="document.forms[0].submit()">
+																	<form method="POST" action="${opt.booking_request.url}">
+																		<input type="hidden" name="u" value="${opt.booking_request.post_data.replace(
+																			/^u=/,
+																			""
+																		)}">
+																	</form>
+																</body>
+															</html>
+														`;
+														const newTab = window.open("", "_blank");
+														newTab.document.write(formHtml);
+														newTab.document.close();
+													}}
+													className="mt-2 px-4 py-1 bg-green-700 text-white rounded-md hover:bg-green-800"
+												>
+													Book This Flight
+												</button>
+											)}
+
+											{/* 📞 Phone Booking Fallback */}
+											{opt.booking_phone && (
+												<p className="text-sm text-gray-800 mt-2">
+													📞 Book via Phone: {opt.booking_phone}
+													{opt.estimated_phone_service_fee && (
+														<span className="ml-2 text-xs text-gray-500">
+															(+{formatPrice(opt.estimated_phone_service_fee)} service fee)
+														</span>
+													)}
+												</p>
+											)}
+										</div>
+									))}
+								</div>
+							)}
 
 							{/* Timeline Block */}
 							<div className="grid grid-cols-3 items-center mt-4">
@@ -413,7 +651,7 @@ const ItineraryApp = () => {
 
 									{/* Layover Name */}
 									{item.layovers?.length > 0 && (
-										<p classn="text-xs text-gray-500 mt-1">
+										<p className="text-xs text-gray-500 mt-1">
 											via {item.layovers.map(l => l.name).join(", ")}
 										</p>
 									)}
@@ -442,16 +680,14 @@ const ItineraryApp = () => {
 										Selected
 									</span>
 								)}
-
 							</div>
-
 						</div>
 					);
 				})}
-
 			</section>
 
-			{/* Section 5: Other Sections */}
+
+{/* ---------------------------------------------------------Other-Sections------------------------------------------------------ */}
 			<section>
 				<h1 className="text-3xl font-bold mb-4">Additional Information</h1>
 				{other_sections.map((sec, idx) => (

@@ -74,6 +74,8 @@ def itinerary_prompt(user_msg, user_location, current_date, combined_results, fl
             "hotels": [
                 {{
                     "days": 0,
+                    "check_in_date": "YYYY-MM-DD",
+                    "check_out_date": "YYYY-MM-DD",
                     "index": 0
                 }},
                 ...

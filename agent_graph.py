@@ -74,6 +74,18 @@ async def itinerary_node(state):
     flight_inputs = data.get("flight_inputs", {})
     hotel_inputs = data.get("hotel_inputs", {})
 
+    # building flight params to send to frontend
+    flight_params = {
+        "engine": "google_flights",
+        "flight_type": flight_inputs.get("flight_type"),
+        "currency": flight_inputs.get("currency"),
+        "departure_id": flight_inputs.get("departure_id"),
+        "arrival_id": flight_inputs.get("arrival_id"),
+        "show_cheapest_flights": "true",
+        "outbound_date": flight_inputs.get("outbound_date"),
+        "return_date": flight_inputs.get("return_date")
+    }
+
     # STEP 2 — parallel tool calls
     search_tasks = [web_search(query=q) for q in search_queries]
     flight_task = get_flights(**flight_inputs)
@@ -110,6 +122,7 @@ async def itinerary_node(state):
     
     ans["flights"] = flight_data
     ans["hotels"] = hotel_data
+    ans["flight_params"] = flight_params
 
     return {
         "messages": [

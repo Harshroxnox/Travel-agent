@@ -13,6 +13,8 @@
         "hotels": [
             {{
                 "days": 0,
+                "check_in_date": "YYYY-MM-DD",
+                "check_out_date": "YYYY-MM-DD",
                 "index": 0
             }},
             ...
@@ -46,6 +48,18 @@
     ],
 
     "currency": "",
+
+    "misc_expenses": [
+        {{
+            "name": "Visa",
+            "price": 0
+        }},
+        {{
+            "name": "Local Transport",
+            "price": 0
+        }},
+        ...
+    ],
 
     "other_sections": [
         {{
@@ -195,4 +209,15 @@
         },
         ...
     ]
+
+    "flight_params": {
+        "engine": "google_flights",
+        "flight_type": "round_trip",
+        "currency": "INR",
+        "departure_id": "DEL",
+        "arrival_id": "DXB",
+        "show_cheapest_flights": "true",
+        "outbound_date": "YYYY-MM-DD",
+        "return_date": "YYYY-MM-DD"
+    }
 }}

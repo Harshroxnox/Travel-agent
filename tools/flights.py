@@ -1,4 +1,3 @@
-from langchain_core.tools import tool
 from dotenv import load_dotenv
 import aiohttp
 from typing import Dict, Any
@@ -54,6 +53,7 @@ async def get_flights(
 
 
             # Extract top 3 flights (default behavior)
+            print(f"No. of flights: {len(data.get("best_flights"))}")
             flights = data.get("best_flights", [])[:3]
 
             print(params)
