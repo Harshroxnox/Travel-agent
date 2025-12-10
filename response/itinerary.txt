@@ -45,16 +45,7 @@
         ...
     ],
 
-    "price_estimation": {{
-        "currency": "",
-        "approx_total_cost": 0,
-        "breakdown": {{
-            "flights": 0,
-            "hotels": 0,
-            "food": 0,
-            "activities": 0
-        }}
-    }},
+    "currency": "",
 
     "other_sections": [
         {{

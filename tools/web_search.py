@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crawl4ai import AsyncWebCrawler
 import os
@@ -11,7 +10,6 @@ from bs4 import BeautifulSoup
 
 load_dotenv()
 
-# summarizer_llm = ChatOpenAI(model="gpt-4o", tags=["internal"])
 summarizer_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", tags=["internal"])
 
 def clean_markdown(text: str) -> str:

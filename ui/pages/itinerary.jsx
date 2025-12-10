@@ -27,7 +27,7 @@ const ItineraryApp = () => {
 			</div>
 		);
 	}
-	const { itinerary, hotels, selected, price_estimation, flights, other_sections } = data;
+	const { itinerary, hotels, selected, misc_expenses, currency, flights, other_sections } = data;
 	console.log(flights);
 	console.log(hotels);
 
@@ -40,10 +40,9 @@ const ItineraryApp = () => {
 	);
 
 	const formatPrice = (amount) => {
-		// Ensure price_estimation.currency is available
-		const currency = price_estimation.currency || '$';
+		const currency_safe = currency || '$';
 		const price = (typeof amount === 'number') ? amount : 0;
-		return `${currency} ${price.toLocaleString()}`;
+		return `${currency_safe} ${price.toLocaleString()}`;
 	};
 
 	// NOTE: This detailedHotels and detailedFlights can be reduced and needs to be optimized
@@ -108,6 +107,12 @@ const ItineraryApp = () => {
 		});
 	});
 
+    // Calculate Misc Expenses
+    let miscPrices = 0;
+    misc_expenses.forEach(expense => {
+        miscPrices = miscPrices + expense.price;
+    })
+
 	// --------------------------------------------------------------------
 	// --- STEP 4: CALCULATE OVERALL TOTAL COST ---
 	// --------------------------------------------------------------------
@@ -115,7 +120,8 @@ const ItineraryApp = () => {
 		totalHotelsCost +
 		totalFlightsCost +
 		totalFoodCost +
-		totalActivitiesCost;
+		totalActivitiesCost +
+        miscPrices;
 
 
 	return (
@@ -162,7 +168,7 @@ const ItineraryApp = () => {
 					</p>
 
 					{/* --- DETAILED BREAKDOWN --- */}
-					<p className="font-semibold text-xl mb-3 border-b pb-2">Detailed Breakdown</p>
+					<p className="font-semibold text-xl mb-3 border-b pb-2">Detailed Breakdown for 1 Person</p>
 
 					{/* -------------------- FLIGHTS DETAIL -------------------- */}
 					<div className="mb-4">
@@ -212,7 +218,7 @@ const ItineraryApp = () => {
 
 					{/* -------------------- OTHER BREAKDOWN ITEMS -------------------- */}
 					<div className="mt-3 pt-2 border-t">
-						<h2 className="text-lg font-bold mb-1">💸 Estimated Daily Costs</h2>
+						<h2 className="text-lg font-bold mb-1">💸 Estimated Costs</h2>
 						<ul className="space-y-1">
 							<li className="flex justify-between p-1">
 								<span className="font-medium text-gray-700">🍔 Food Total:</span>
@@ -226,6 +232,21 @@ const ItineraryApp = () => {
 									{formatPrice(totalActivitiesCost)}
 								</span>
 							</li>
+						</ul>
+					</div>
+
+                    {/* -------------------- Miscellaneous Expenses -------------------- */}
+					<div className="mt-3 pt-2 border-t">
+						<h2 className="text-lg font-bold mb-1">💸 Miscellaneous Expenses</h2>
+						<ul className="space-y-1">
+                            {misc_expenses.map(expense => (
+                                <li className="flex justify-between p-1">
+                                    <span className="font-medium text-gray-700">{expense.name}</span>
+                                    <span className="text-gray-900 font-semibold">
+                                        {formatPrice(expense.price)}
+                                    </span>
+                                </li>
+                            ))}
 						</ul>
 					</div>
 
@@ -358,7 +379,7 @@ const ItineraryApp = () => {
 								</div>
 								<div className="ml-auto text-right">
 									<p className="text-2xl font-bold">
-										{price_estimation.currency} {formatPrice(item.price)}
+										{formatPrice(item.price)}
 									</p>
 									<button className="mt-2 px-4 py-1 bg-gray-800 text-white rounded-md">
 										View Prices

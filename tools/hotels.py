@@ -21,7 +21,7 @@ async def get_hotels(query: str, check_in_date: str, check_out_date: str, curren
         "engine": "google_hotels",
         "hotel_class": "3,4,5",
         "currency": currency,
-        "rating": "8",
+        "rating": "7",
         "q": query,
         "check_in_date": check_in_date,
         "check_out_date": check_out_date,
@@ -36,6 +36,9 @@ async def get_hotels(query: str, check_in_date: str, check_out_date: str, curren
                 return f"API request failed with status {resp.status}"
             
             hotels = hotels.get("properties", [])
-            hotels = hotels[:4]
+
+            print(f"No. of hotels: {len(hotels)}")
+            hotels = hotels[:7]
+            
             print(params)
             return hotels
