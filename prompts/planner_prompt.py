@@ -11,6 +11,8 @@ def planner_prompt(user_msg, user_location, current_date):
     You must generate EVERYTHING needed for my pipeline.
     If the user doesn't specify the exact details then assume good defaults like 1 month into future 5-7 day trip:
 
+    0. **General Trip Information**
+
     1. **Three web search queries**
     - Related to travel itinerary planning
     - About tourist spots/activities with pricing, things to do, timings, weather, visa, safety, transport
@@ -47,11 +49,23 @@ def planner_prompt(user_msg, user_location, current_date):
 
     The JSON MUST follow this exact structure:
     {{
+        "trip_info": {{
+            "title": "",
+            "description": "",
+            "origin": "",
+            "destination": "",
+            "start_date": "YYYY-MM-DD",
+            "end_date": "YYYY-MM-DD",
+            "total_days": number,
+            "currency": ""
+        }},
+
         "search_queries": [
             "string",
             "string",
             "string"
         ],
+
         "flight_inputs": {{
             "departure_id": "string",
             "arrival_id": "string",
@@ -60,6 +74,7 @@ def planner_prompt(user_msg, user_location, current_date):
             "return_date": "YYYY-MM-DD",
             "flight_type": "round_trip"
         }},
+
         "hotel_inputs": {{
             "query": "string",
             "currency": "string",

@@ -34,8 +34,8 @@ const ItineraryApp = () => {
 			</div>
 		);
 	}
-	const { trip_info, itinerary, hotels, selected, misc_expenses, flight_params, currency, flights, other_sections } = data;
 
+	const { trip_info, itinerary, hotels, selected, misc_expenses, flight_params, flights, other_sections } = data;
 
 	const handleFlightBooking = async (flightItem, idx) => {
 		try {
@@ -94,7 +94,7 @@ const ItineraryApp = () => {
 				property_token: hotel.property_token,
 				check_in_date: checkInDate,
 				check_out_date: checkOutDate,
-				currency: currency || "USD"
+				currency: trip_info.currency || "USD"
 			};
 
 			const res = await fetch(`${baseUrl}/api/hotels_booking`, {
@@ -127,7 +127,7 @@ const ItineraryApp = () => {
 	);
 
 	const formatPrice = (amount) => {
-		const currency_safe = currency || '$';
+		const currency_safe = trip_info.currency || 'USD';
 		const price = (typeof amount === 'number') ? amount : 0;
 		return `${currency_safe} ${price.toLocaleString()}`;
 	};

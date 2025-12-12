@@ -74,7 +74,11 @@ async def itinerary_node(state):
     flight_inputs = data.get("flight_inputs", {})
     hotel_inputs = data.get("hotel_inputs", {})
 
-    # building flight params to send to frontend
+    # Extract trip info from planner
+    trip_info = data.get("trip_info", {})
+    print(trip_info)
+
+    # Building flight params to send to frontend
     flight_params = {
         "engine": "google_flights",
         "flight_type": flight_inputs.get("flight_type"),
@@ -108,7 +112,7 @@ async def itinerary_node(state):
     )
 
     # STEP 3 — Final LLM call to generate itinerary
-    trip_prompt = itinerary_prompt(user_msg, user_location, current_date, combined_results, flight_data, llm_hotel_data)
+    trip_prompt = itinerary_prompt(user_msg, user_location, current_date, trip_info, combined_results, flight_data, llm_hotel_data)
 
     final_reply = await final_llm.ainvoke(trip_prompt)
     print("Final LLM Usage:", final_reply.usage_metadata)
@@ -123,6 +127,7 @@ async def itinerary_node(state):
     ans["flights"] = flight_data
     ans["hotels"] = hotel_data
     ans["flight_params"] = flight_params
+    ans["trip_info"] = trip_info
 
     return {
         "messages": [
